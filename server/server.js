@@ -12,7 +12,10 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-connectDB();
+app.use(async (req, res, next) => {
+  await connectDB();
+  next();
+});
 
 app.get("/", (req, res) => {
   res.send("Server is running");
