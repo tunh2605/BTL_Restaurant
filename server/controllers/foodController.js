@@ -15,6 +15,7 @@ export const addFood = async (req, res) => {
 
 export const getFoods = async (req, res) => {
   try {
+    console.log("Get foods");
     const { category } = req.query;
     const filter = category ? { category } : {};
 

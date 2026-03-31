@@ -15,6 +15,7 @@ const Contact = lazy(() => import("./pages/Contact"));
 const Reserve = lazy(() => import("./pages/Reserve"));
 const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
+const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Profile = lazy(() => import("./pages/Profile"));
 
@@ -64,6 +65,7 @@ function App() {
 
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
 
           <Route
             path="/admin/*"
