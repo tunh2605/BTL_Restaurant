@@ -16,7 +16,7 @@ import {
 import { BlurCircle } from "../components/BlurCircle";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { assets, foods } from "../assets/assets";
+import { assets } from "../assets/assets";
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
 
@@ -191,7 +191,7 @@ const Profile = () => {
             {[
               { label: "Đơn hàng", value: successOrders, icon: Package },
               { label: "Đặt bàn", value: successReservations, icon: CalendarDays },
-            ].map(({ label, value, icon: Icon }) => (
+            ].map(({ label, value  }) => (
               <div key={label} className="bg-white rounded-2xl px-5 py-3 text-center shadow-sm min-w-[80px]">
                 <p className="text-2xl font-bold text-primary-dull">{value}</p>
                 <p className="text-xs text-gray-400 mt-0.5">{label}</p>
@@ -206,7 +206,7 @@ const Profile = () => {
         <div className="max-w-4xl mx-auto">
           {/* Tab bar */}
           <div className="flex gap-1 bg-white rounded-2xl p-1.5 shadow-sm mb-6 w-fit">
-            {TABS.map(({ key, label, icon: Icon }) => (
+            {TABS.map(({ key, label }) => (
               <button
                 key={key}
                 onClick={() => setActiveTab(key)}
@@ -242,7 +242,7 @@ const Profile = () => {
                     value: joinDate,
                     icon: Clock,
                   },
-                ].map(({ label, value, icon: Icon }) => (
+                ].map(({ label, value }) => (
                   <div key={label} className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-xl bg-[#F5EDE3] flex items-center justify-center shrink-0">
                       <Icon className="w-4.5 h-4.5 text-primary-dull" />
