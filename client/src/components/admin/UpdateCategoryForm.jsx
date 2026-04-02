@@ -1,20 +1,13 @@
-import { X, Tag, Loader2 } from "lucide-react";
-import { useState, useEffect } from "react";
 import axios from "axios";
+import { Loader2, Tag, X } from "lucide-react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 import { useFood } from "../../context/FoodContext";
 
-const AddCategoryForm = ({ open, onClose }) => {
-  const [name, setName] = useState("");
-  const [loading, setLoading] = useState(false);
+const UpdateCategoryForm = ({ open, onClose, category }) => {
   const { refreshCategories } = useFood();
-
-  useEffect(() => {
-    if (!open) {
-      setName("");
-      setLoading(false);
-    }
-  }, [open]);
+  const [loading, setLoading] = useState(false);
+  const [name, setName] = useState("");
 
   const handleSubmit = async () => {
     if (!name.trim()) {
@@ -22,29 +15,30 @@ const AddCategoryForm = ({ open, onClose }) => {
       return;
     }
 
+    if (name === category.name) {
+      toast.error("Vui lòng không nhập trùng");
+      return;
+    }
+
     try {
       setLoading(true);
 
-      const { data } = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/categories/add`,
+      const { data } = await axios.put(
+        `${import.meta.env.VITE_API_URL}/api/categories/update/${category._id}`,
         { name },
       );
 
-      toast.success(data.message || "Thêm danh mục thành công");
-
       await refreshCategories();
       onClose();
+      toast.success(data.message || "Cập nhật danh mục thành công");
     } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Có lỗi xảy ra, vui lòng thử lại",
-      );
+      toast.error(error.response?.data?.message || "Lỗi cập nhật danh mục");
     } finally {
       setLoading(false);
     }
   };
 
   if (!open) return null;
-
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
@@ -58,9 +52,11 @@ const AddCategoryForm = ({ open, onClose }) => {
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="space-y-1">
-            <h2 className="text-2xl font-bold text-gray-800">Thêm danh mục</h2>
+            <h2 className="text-2xl font-bold text-gray-800">
+              Cập nhật danh mục
+            </h2>
             <p className="text-sm text-gray-400">
-              Mở rộng thực đơn với một chủ đề mới
+              Cập nhật tên mới cho danh mục {category.name}
             </p>
           </div>
 
@@ -78,7 +74,7 @@ const AddCategoryForm = ({ open, onClose }) => {
         {/* Input */}
         <div className="space-y-2">
           <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-            Tên danh mục
+            Tên danh mục mới
           </label>
 
           <div className="relative">
@@ -124,4 +120,4 @@ const AddCategoryForm = ({ open, onClose }) => {
   );
 };
 
-export default AddCategoryForm;
+export default UpdateCategoryForm;

@@ -12,10 +12,12 @@ const foodSchema = new mongoose.Schema(
       ref: "Category",
     },
 
-    restaurant: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Restaurant",
-    },
+    restaurants: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Restaurant",
+      },
+    ],
 
     isAvailable: { type: Boolean, default: true },
   },

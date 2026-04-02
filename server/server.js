@@ -10,8 +10,10 @@ import categoryRouter from "./routes/categoryRoutes.js";
 import reservationRouter from "./routes/reservationRoutes.js";
 import { createAuthRouter } from "./routes/authRouter.js";
 import { errorMiddleware } from "./errors/errorMiddleware.js";
+import restaurantRouter from "./routes/restaurantRoutes.js";
 
 const app = express();
+const port = 3000;
 
 app.use(express.json());
 app.use(cors());
@@ -57,5 +59,8 @@ app.use("/api/reservations", reservationRouter);
 app.use("/api/auth", createAuthRouter(env));
 
 app.use(errorMiddleware);
+app.use("/api/restaurants", restaurantRouter);
 
-export default app;
+app.listen(port, () => {
+  console.log(`Server is running at http://localhost:${port}`);
+});

@@ -1,18 +1,20 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   Pencil,
   Trash2,
   Plus,
   UtensilsCrossed,
   LayoutGrid,
+  ChevronDown,
 } from "lucide-react";
 import { useFood } from "../../context/FoodContext";
 import CategoryCard from "./CategoryCard";
 import AddCategoryForm from "./AddCategoryForm";
-import { useRef } from "react";
 import toast from "react-hot-toast";
 import axios from "axios";
 import ConfirmModal from "./ConfirmModal";
+import UpdateCategoryForm from "./UpdateCategoryForm";
+import { useEffect } from "react";
 
 const StatusBadge = ({ isAvailable }) => (
   <div className="flex items-center gap-1.5">
@@ -27,30 +29,31 @@ const StatusBadge = ({ isAvailable }) => (
   </div>
 );
 
-const CategoryPill = ({ name, index }) => {
-  const colors = [
-    "bg-orange-100 text-orange-700",
-    "bg-amber-100 text-amber-700",
-    "bg-blue-100 text-blue-700",
-    "bg-pink-100 text-pink-700",
-    "bg-green-100 text-green-700",
-    "bg-purple-100 text-purple-700",
-  ];
+const CATEGORY_COLORS = [
+  "bg-orange-100 text-orange-700",
+  "bg-amber-100 text-amber-700",
+  "bg-blue-100 text-blue-700",
+  "bg-pink-100 text-pink-700",
+  "bg-green-100 text-green-700",
+  "bg-purple-100 text-purple-700",
+];
 
-  const color = colors[index % colors.length] || "bg-gray-100 text-gray-600";
+const CategoryPill = ({ name, index }) => (
+  <span
+    className={`px-3 py-1 rounded-full text-xs font-medium ${CATEGORY_COLORS[index % CATEGORY_COLORS.length]}`}
+  >
+    {name}
+  </span>
+);
 
-  return (
-    <span className={`px-3 py-1 rounded-full text-xs font-medium ${color}`}>
-      {name}
-    </span>
-  );
-};
-
+// modal.type: null | "add" | "update" | "delete"
+const MODAL_CLOSED = { type: null, data: null };
 const ListFoodContent = ({ isHQAdmin = true }) => {
   const [activeCategory, setActiveCategory] = useState("all");
   const [visibleCount, setVisibleCount] = useState(4);
-  const [openConfirm, setOpenConfirm] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [modal, setModal] = useState(MODAL_CLOSED);
+
+  const scrollRef = useRef();
   const {
     foods = [],
     categories = [],
@@ -58,10 +61,15 @@ const ListFoodContent = ({ isHQAdmin = true }) => {
     fetchFoods,
     refreshCategories,
   } = useFood();
-  const [openAddCategory, setOpenAddCategory] = useState(false);
-  const scrollRef = useRef();
+
+  useEffect(() => {
+    fetchFoods();
+  }, []);
 
   if (loading) return <div>Đang tải...</div>;
+
+  const openModal = (type, data = null) => setModal({ type, data });
+  const closeModal = () => setModal(MODAL_CLOSED);
 
   const handleCategoryChange = (categoryId) => {
     setActiveCategory(categoryId);
@@ -69,32 +77,21 @@ const ListFoodContent = ({ isHQAdmin = true }) => {
     fetchFoods(categoryId === "all" ? "" : categoryId);
   };
 
-  const handleDeleteClick = (category) => {
-    setSelectedCategory(category);
-    setOpenConfirm(true);
-  };
-
   const handleConfirmDelete = async () => {
-    if (!selectedCategory) return;
-
+    if (!modal.data) return;
     try {
       const { data } = await axios.delete(
-        `${import.meta.env.VITE_API_URL}/api/categories/delete/${selectedCategory._id}`,
+        `${import.meta.env.VITE_API_URL}/api/categories/delete/${modal.data._id}`,
       );
-
       toast.success(data.message);
-
       await refreshCategories();
-
-      setOpenConfirm(false);
-      setSelectedCategory(null);
+      closeModal();
     } catch (err) {
       toast.error(err.response?.data?.message || "Xóa thất bại");
     }
   };
 
   const visibleFoods = foods.slice(0, visibleCount);
-  const hasMore = visibleCount < foods.length;
 
   return (
     <>
@@ -111,7 +108,7 @@ const ListFoodContent = ({ isHQAdmin = true }) => {
             {isHQAdmin && (
               <button
                 className="flex items-center gap-1.5 text-sm font-medium text-primary-dull hover:text-primary-dull/70 transition-colors"
-                onClick={() => setOpenAddCategory(true)}
+                onClick={() => openModal("add")}
               >
                 <Plus className="w-4 h-4" />
                 Thêm danh mục
@@ -135,7 +132,8 @@ const ListFoodContent = ({ isHQAdmin = true }) => {
                     foodCount={cat.foodCount}
                     isHQAdmin={isHQAdmin}
                     index={i}
-                    onDelete={handleDeleteClick}
+                    onDelete={(cat) => openModal("delete", cat)}
+                    onEdit={(cat) => openModal("update", cat)}
                   />
                 </div>
               ))}
@@ -145,7 +143,6 @@ const ListFoodContent = ({ isHQAdmin = true }) => {
 
         {/* ── Danh sách món ── */}
         <div className="bg-white rounded-3xl p-6 shadow-sm">
-          {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div className="flex items-center gap-2">
               <UtensilsCrossed className="w-5 h-5 text-primary-dull" />
@@ -154,26 +151,11 @@ const ListFoodContent = ({ isHQAdmin = true }) => {
               </h2>
             </div>
 
-            {/* Filter tabs */}
             <div className="flex items-center gap-2 flex-wrap">
-              <button
-                onClick={() => {
-                  handleCategoryChange("all");
-                }}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
-                  activeCategory === "all"
-                    ? "bg-gray-800 text-white shadow-sm"
-                    : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-                }`}
-              >
-                Tất cả
-              </button>
-              {categories.map((cat) => (
+              {[{ _id: "all", name: "Tất cả" }, ...categories].map((cat) => (
                 <button
                   key={cat._id}
-                  onClick={() => {
-                    handleCategoryChange(cat._id);
-                  }}
+                  onClick={() => handleCategoryChange(cat._id)}
                   className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
                     activeCategory === cat._id
                       ? "bg-gray-800 text-white shadow-sm"
@@ -186,7 +168,6 @@ const ListFoodContent = ({ isHQAdmin = true }) => {
             </div>
           </div>
 
-          {/* Table header */}
           <div className="grid grid-cols-12 text-xs font-semibold text-gray-400 uppercase tracking-wider pb-3 border-b border-gray-100 px-2">
             <div className="col-span-5">Món ăn</div>
             <div className="col-span-2">Danh mục</div>
@@ -195,7 +176,6 @@ const ListFoodContent = ({ isHQAdmin = true }) => {
             {isHQAdmin && <div className="col-span-1 text-right">Thao tác</div>}
           </div>
 
-          {/* Food rows */}
           <div className="divide-y divide-gray-50">
             {visibleFoods.map((food, i) => (
               <div
@@ -203,7 +183,6 @@ const ListFoodContent = ({ isHQAdmin = true }) => {
                 style={{ animationDelay: `${i * 60}ms` }}
                 className="grid grid-cols-12 items-center py-4 px-2 hover:bg-[#faf7f4] rounded-xl transition-all duration-200 animate-fadeIn group"
               >
-                {/* Món ăn */}
                 <div className="col-span-5 flex items-center gap-3">
                   <img
                     src={food.image}
@@ -215,12 +194,11 @@ const ListFoodContent = ({ isHQAdmin = true }) => {
                       {food.name}
                     </p>
                     <p className="text-xs text-gray-400 truncate">
-                      {food.description.slice(0, 35)}...
+                      {(food.description || "").slice(0, 35)}...
                     </p>
                   </div>
                 </div>
 
-                {/* Danh mục */}
                 <div className="col-span-2">
                   <CategoryPill
                     name={food.category?.name || ""}
@@ -230,17 +208,14 @@ const ListFoodContent = ({ isHQAdmin = true }) => {
                   />
                 </div>
 
-                {/* Giá */}
                 <div className="col-span-2 font-semibold text-gray-700">
                   {food.price.toLocaleString("vi-VN")}
                 </div>
 
-                {/* Trạng thái */}
                 <div className="col-span-2">
                   <StatusBadge isAvailable={food.isAvailable} />
                 </div>
 
-                {/* Thao tác */}
                 {isHQAdmin && (
                   <div className="col-span-1 flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                     <button className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors">
@@ -255,39 +230,34 @@ const ListFoodContent = ({ isHQAdmin = true }) => {
             ))}
           </div>
 
-          {/* Xem thêm */}
-          {hasMore && (
+          {visibleCount < foods.length && (
             <button
               onClick={() => setVisibleCount((v) => v + 4)}
               className="w-full mt-4 py-3 text-sm font-semibold text-primary-dull hover:text-primary-dull/70 flex items-center justify-center gap-1.5 transition-colors"
             >
               Xem thêm món ăn
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
+              <ChevronDown
+                className={`w-4 h-4 transition-transform ${open ? "rotate-180" : ""}`}
+              />
             </button>
           )}
         </div>
       </div>
-      {openAddCategory && (
-        <AddCategoryForm setOpenAddCategory={setOpenAddCategory} />
-      )}
+
+      <AddCategoryForm open={modal.type === "add"} onClose={closeModal} />
+
+      <UpdateCategoryForm
+        open={modal.type === "update"}
+        onClose={closeModal}
+        category={modal.data}
+      />
+
       <ConfirmModal
-        open={openConfirm}
-        onClose={() => setOpenConfirm(false)}
+        open={modal.type === "delete"}
+        onClose={closeModal}
         onConfirm={handleConfirmDelete}
         title="Xóa danh mục?"
-        description={`Bạn có chắc muốn xóa "${selectedCategory?.name}" không?`}
+        description={`Bạn có chắc muốn xóa "${modal.data?.name}" không?`}
       />
     </>
   );
