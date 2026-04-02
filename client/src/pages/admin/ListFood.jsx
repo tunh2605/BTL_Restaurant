@@ -1,6 +1,7 @@
 import { Plus } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import ListFoodContent from "../../components/admin/ListFoodContent";
+import { Link } from "react-router-dom";
 
 const ListFood = () => {
   const { isHQAdmin } = useAuth();
@@ -16,12 +17,14 @@ const ListFood = () => {
         </div>
 
         {isHQAdmin && (
-          <button className="flex items-center gap-2 self-start sm:self-auto shrink-0 rounded-full font-semibold px-5 py-3 bg-secondary-dull text-primary-dull hover:bg-primary-dull hover:text-white transition-all duration-200 cursor-pointer">
-            <div className="bg-primary-dull rounded-full p-0.5 group-hover:bg-white transition-all">
-              <Plus className="w-4 h-4 text-secondary-dull" />
-            </div>
-            Thêm món mới
-          </button>
+          <Link to={"/admin/foods/add"}>
+            <button className="flex items-center gap-2 self-start sm:self-auto shrink-0 rounded-full font-semibold px-5 py-3 bg-secondary-dull text-primary-dull hover:bg-primary-dull hover:text-white transition-all duration-200 cursor-pointer">
+              <div className="bg-primary-dull rounded-full p-0.5 group-hover:bg-white transition-all">
+                <Plus className="w-4 h-4 text-secondary-dull" />
+              </div>
+              Thêm món mới
+            </button>
+          </Link>
         )}
       </div>
       <ListFoodContent isHQAdmin={isHQAdmin} />

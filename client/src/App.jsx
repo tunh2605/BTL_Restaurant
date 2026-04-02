@@ -26,6 +26,8 @@ const ListUser = lazy(() => import("./pages/admin/ListUser"));
 const ListReservation = lazy(() => import("./pages/admin/ListReservation"));
 const ListPromotion = lazy(() => import("./pages/admin/ListPromotion"));
 const Report = lazy(() => import("./pages/admin/Report"));
+const ListRestaurant = lazy(() => import("./pages/admin/ListRestaurant"));
+const AddFood = lazy(() => import("./pages/admin/AddFood"));
 
 function App() {
   const ProtectedRoute = ({ children, adminOnly = false }) => {
@@ -75,11 +77,13 @@ function App() {
           >
             <Route index element={<Dashboard />} />
             <Route path="foods" element={<ListFood />} />
+            <Route path="foods/add" element={<AddFood />} />
             <Route path="orders" element={<ListOrder />} />
             <Route path="users" element={<ListUser />} />
             <Route path="reservations" element={<ListReservation />} />
             <Route path="promotions" element={<ListPromotion />} />
             <Route path="report" element={<Report />} />
+            <Route path="restaurant" element={<ListRestaurant />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />

@@ -6,8 +6,10 @@ import foodRouter from "./routes/foodRoutes.js";
 import userRouter from "./routes/userRoutes.js";
 import adminRouter from "./routes/adminRoutes.js";
 import categoryRouter from "./routes/categoryRoutes.js";
+import restaurantRouter from "./routes/restaurantRoutes.js";
 
 const app = express();
+const port = 3000;
 
 app.use(express.json());
 app.use(cors());
@@ -25,5 +27,8 @@ app.use("/api/foods", foodRouter);
 app.use("/api/users", userRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/categories", categoryRouter);
+app.use("/api/restaurants", restaurantRouter);
 
-export default app;
+app.listen(port, () => {
+  console.log(`Server is running at http://localhost:${port}`);
+});
