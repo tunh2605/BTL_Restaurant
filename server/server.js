@@ -22,24 +22,24 @@ const env = process.env;
 
 // OAuth middleware phải được mount SỚM NHẤT, trước tất cả routes
 app.use(
-	auth({
-		issuerBaseURL: env.ISSUER_BASE_URL,
-		baseURL: env.BASE_URL,
-		clientID: env.CLIENT_ID,
-		secret: env.SECRET,
-		clientSecret: env.CLIENT_SECRET,
-		authRequired: false,
-		idpLogout: false,
-		authorizationParams: {
-			response_type: "code",
-			scope: "openid profile email",
-		},
-		routes: {
-			login: false,
-			logout: false,
-			callback: "/api/auth/callback",
-		},
-	}),
+  auth({
+    issuerBaseURL: env.ISSUER_BASE_URL,
+    baseURL: env.BASE_URL,
+    clientID: env.CLIENT_ID,
+    secret: env.SECRET,
+    clientSecret: env.CLIENT_SECRET,
+    authRequired: false,
+    idpLogout: false,
+    authorizationParams: {
+      response_type: "code",
+      scope: "openid profile email",
+    },
+    routes: {
+      login: false,
+      logout: false,
+      callback: "/api/auth/callback",
+    },
+  }),
 );
 
 app.use(async (req, res, next) => {
@@ -64,3 +64,5 @@ app.use("/api/restaurants", restaurantRouter);
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
 });
+
+export default app;

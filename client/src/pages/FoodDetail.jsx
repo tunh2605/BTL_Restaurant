@@ -7,29 +7,20 @@ import {
 } from "lucide-react";
 import Breadcrumb from "../components/Breadcrumb";
 import { useNavigate, useParams } from "react-router-dom";
-import { foods, restaurantsData } from "../assets/assets";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import ReviewSection from "../components/ReviewSection";
 import RestaurantDropdown from "../components/RestaurantDropdown";
-import axios from "axios";
+import { useFood } from "../context/FoodContext";
 
 const FoodDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-
+  const { foods, restaurants } = useFood();
   const food = foods.find((f) => f._id === id);
 
   const [quantity, setQuantity] = useState(1);
   const [note, setNote] = useState("");
   const [branch, setBranch] = useState("");
-  const [restaurants, setRestaurants] = useState(restaurantsData); // thay thành [] sau này để fetch từ api
-  // useEffect(() => {
-  //   const fetchRestaurants = async () => {
-  //     const { data } = await axios.get("/api/restaurants");
-  //     setRestaurants(data);
-  //   };
-  //   fetchRestaurants();
-  // }, []);
 
   return (
     <div className="px-6 md:px-16 lg:px-40 pt-30 md:pt-30">

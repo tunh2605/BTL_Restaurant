@@ -1,10 +1,11 @@
 import { useLocation, Link } from "react-router-dom";
 import { useMemo } from "react";
-import { foods, categories } from "../assets/assets";
+import { useFood } from "../context/FoodContext";
 
 const Breadcrumb = ({ customCrumbs }) => {
   const { pathname } = useLocation();
 
+  const { foods, categories } = useFood();
   const categoryMap = useMemo(
     () => Object.fromEntries(categories.map((c) => [c.slug, c.name])),
     [],

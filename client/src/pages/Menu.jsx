@@ -1,19 +1,22 @@
-import React from "react";
-import { foods, categories } from "../assets/assets";
 import { useNavigate, useParams } from "react-router-dom";
 import FoodCard from "../components/FoodCard";
 import { UtensilsCrossed } from "lucide-react";
+import { useFood } from "../context/FoodContext";
 
 const Menu = () => {
   const { category } = useParams();
   const navigate = useNavigate();
+  const { foods, categories } = useFood();
 
   const selectedCategory = categories.find((c) => c.slug === category);
 
   const filteredFoods =
     !category || category === "tat-ca"
       ? foods
-      : foods.filter((f) => f.category === selectedCategory?._id);
+      : foods.filter(
+          (f) =>
+            f.category?._id?.toString() === selectedCategory?._id?.toString(),
+        );
 
   return foods.length > 0 ? (
     <div className="px-6 md:px-16 lg:px-24 pt-48 w-full">
@@ -22,7 +25,7 @@ const Menu = () => {
           Hương vị bản địa
         </p>
         <h1 className="text-6xl font-bold p-8">
-          Thực đơn <span className="text-primary-dull">DoMasala</span>
+          Thực đơn <span className="text-primary-dull italic">DoMasala</span>
         </h1>
         <p className="text-center text-gray-500 max-w-xl mx-auto">
           Khám phá hành trình vị giác xuyên lục địa với những nguyên liệu sạch

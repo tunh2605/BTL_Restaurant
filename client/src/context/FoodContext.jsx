@@ -16,6 +16,7 @@ export const FoodProvider = ({ children }) => {
   const [foods, setFoods] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [restaurants, setRestaurants] = useState([]);
 
   const fetchFoods = useCallback(async (categoryId = "") => {
     try {
@@ -41,22 +42,35 @@ export const FoodProvider = ({ children }) => {
     }
   }, []);
 
+  const fetchRestaurants = useCallback(async () => {
+    try {
+      const { data } = await axios.get(
+        `${API}/api/restaurants/all-restaurants`,
+      );
+      setRestaurants(Array.isArray(data) ? data : (data.data ?? []));
+    } catch (error) {
+      toast.error("Không thể tải nhà hàng");
+    }
+  }, []);
+
   useEffect(() => {
     const fetchAll = async () => {
       setLoading(true);
-      await Promise.all([fetchFoods(), fetchCategories()]);
+      await Promise.all([fetchFoods(), fetchCategories(), fetchRestaurants()]);
       setLoading(false);
     };
     fetchAll();
-  }, [fetchFoods, fetchCategories]);
+  }, [fetchFoods, fetchCategories, fetchRestaurants]);
 
   return (
     <FoodContext.Provider
       value={{
         foods,
         categories,
+        restaurants,
         loading,
         fetchFoods,
+        fetchRestaurants,
         refreshFoods: fetchFoods,
         refreshCategories: fetchCategories,
       }}

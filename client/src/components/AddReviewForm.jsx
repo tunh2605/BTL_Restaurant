@@ -1,18 +1,37 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import StarRating from "./StarRating";
+import { useAuth } from "../context/AuthContext";
+import toast from "react-hot-toast";
 
 const AddReviewForm = ({ onSubmit, loading }) => {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [name, setName] = useState("");
-  const [error, setError] = useState("");
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = () => {
-    if (!rating) return setError("Vui lòng chọn số sao.");
-    if (!name.trim()) return setError("Vui lòng nhập tên của bạn.");
-    if (!comment.trim()) return setError("Vui lòng nhập nội dung đánh giá.");
+    if (!user) {
+      toast.error(
+        <span>
+          Vui lòng{" "}
+          <button
+            onClick={() => navigate("/login")}
+            className="underline font-semibold cursor-pointer"
+          >
+            đăng nhập
+          </button>{" "}
+          để gửi đánh giá!
+        </span>,
+      );
+      return;
+    }
 
-    setError("");
+    if (!rating) return toast.error("Vui lòng chọn số sao.");
+    if (!name.trim()) return toast.error("Vui lòng nhập tên của bạn.");
+    if (!comment.trim()) return toast.error("Vui lòng nhập nội dung đánh giá.");
+
     onSubmit({ rating, comment, name });
     setRating(0);
     setComment("");
@@ -34,7 +53,7 @@ const AddReviewForm = ({ onSubmit, loading }) => {
         type="text"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        placeholder="Tên của bạn"
+        placeholder={user?.name || "Tên của bạn"}
         className="w-full bg-white rounded-full px-4 py-3 outline-none focus:ring-2 focus:ring-primary-dull text-sm"
       />
 
@@ -45,12 +64,10 @@ const AddReviewForm = ({ onSubmit, loading }) => {
         className="w-full h-28 bg-white rounded-2xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary-dull resize-none text-sm"
       />
 
-      {error && <p className="text-red-500 text-sm">{error}</p>}
-
       <button
         onClick={handleSubmit}
         disabled={loading}
-        className="px-6 py-3 bg-primary-dull text-white rounded-full hover:opacity-90 transition text-sm font-medium disabled:opacity-50"
+        className="px-6 py-3 bg-primary-dull text-white rounded-full hover:opacity-90 transition text-sm font-medium disabled:opacity-50 cursor-pointer"
       >
         {loading ? "Đang gửi..." : "Gửi đánh giá"}
       </button>

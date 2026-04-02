@@ -17,10 +17,22 @@ import axios from "axios";
 import toast from "react-hot-toast";
 
 const TIME_SLOTS = [
-  "10:00", "10:30", "11:00", "11:30",
-  "12:00", "12:30", "13:00", "13:30",
-  "17:00", "17:30", "18:00", "18:30",
-  "19:00", "19:30", "20:00", "20:30",
+  "10:00",
+  "10:30",
+  "11:00",
+  "11:30",
+  "12:00",
+  "12:30",
+  "13:00",
+  "13:30",
+  "17:00",
+  "17:30",
+  "18:00",
+  "18:30",
+  "19:00",
+  "19:30",
+  "20:00",
+  "20:30",
 ];
 
 const PARTY_SIZES = [1, 2, 3, 4, 5, 6, 7, 8];
@@ -68,7 +80,9 @@ const Reserve = () => {
       });
       setSubmitted(true);
     } catch (err) {
-      toast.error(err.response?.data?.message || "Đặt bàn thất bại, vui lòng thử lại.");
+      toast.error(
+        err.response?.data?.message || "Đặt bàn thất bại, vui lòng thử lại.",
+      );
     } finally {
       setLoading(false);
     }
@@ -78,14 +92,22 @@ const Reserve = () => {
     return (
       <div className="min-h-screen flex items-center justify-center px-6 py-32 relative overflow-hidden">
         <BlurCircle top="20%" left="10%" size="300px" color="bg-primary/40" />
-        <BlurCircle bottom="10%" right="5%" size="250px" color="bg-secondary/60" />
+        <BlurCircle
+          bottom="10%"
+          right="5%"
+          size="250px"
+          color="bg-secondary/60"
+        />
         <div className="relative z-10 bg-white rounded-3xl shadow-xl p-10 max-w-md w-full text-center animate-slideUp">
           <div className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-5">
             <CheckCircle className="w-10 h-10 text-green-500" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Đặt bàn thành công!</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">
+            Đặt bàn thành công!
+          </h2>
           <p className="text-gray-400 mb-6 leading-relaxed">
-            Chúng tôi đã nhận được yêu cầu của bạn và sẽ xác nhận qua điện thoại sớm nhất.
+            Chúng tôi đã nhận được yêu cầu của bạn và sẽ xác nhận qua điện thoại
+            sớm nhất.
           </p>
           <div className="bg-[#F5EDE3] rounded-2xl p-5 text-left space-y-3 mb-6">
             <div className="flex items-center gap-3 text-sm text-gray-600">
@@ -98,7 +120,14 @@ const Reserve = () => {
             </div>
             <div className="flex items-center gap-3 text-sm text-gray-600">
               <Calendar className="w-4 h-4 text-primary-dull shrink-0" />
-              <span>{new Date(form.date).toLocaleDateString("vi-VN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</span>
+              <span>
+                {new Date(form.date).toLocaleDateString("vi-VN", {
+                  weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </span>
             </div>
             <div className="flex items-center gap-3 text-sm text-gray-600">
               <Clock className="w-4 h-4 text-primary-dull shrink-0" />
@@ -110,7 +139,18 @@ const Reserve = () => {
             </div>
           </div>
           <button
-            onClick={() => { setSubmitted(false); setStep(0); setForm({ name: user?.name || "", phone: user?.phone || "", date: "", time: "", numberOfPeople: 2, note: "" }); }}
+            onClick={() => {
+              setSubmitted(false);
+              setStep(0);
+              setForm({
+                name: user?.name || "",
+                phone: user?.phone || "",
+                date: "",
+                time: "",
+                numberOfPeople: 2,
+                note: "",
+              });
+            }}
             className="w-full py-3 bg-primary-dull text-white rounded-full font-semibold hover:bg-primary-dull/90 transition cursor-pointer"
           >
             Đặt bàn khác
@@ -123,18 +163,25 @@ const Reserve = () => {
   return (
     <div className="min-h-screen relative overflow-hidden">
       {/* Hero section */}
-      <section className="relative px-6 md:px-16 lg:px-24 pt-36 pb-16 overflow-hidden">
-        <BlurCircle top="50%" left="50%" size="500px" center color="bg-primary/50" />
+      <section className="relative px-6 md:px-16 lg:px-24 pt-48 pb-16 overflow-hidden">
+        <BlurCircle
+          top="50%"
+          left="50%"
+          size="500px"
+          center
+          color="bg-primary/50"
+        />
         <div className="relative z-10 text-center max-w-2xl mx-auto">
-          <span className="inline-block bg-primary/60 text-primary-dull rounded-full px-4 py-1 text-sm font-medium mb-4">
+          <span className="inline-block bg-primary/60 text-primary-dull rounded-full px-4 py-1 text-sm font-medium">
             Trải nghiệm đặc biệt
           </span>
-          <h1 className="text-5xl lg:text-6xl font-bold text-gray-800 leading-tight mb-4">
-            Đặt bàn tại{" "}
-            <span className="text-primary-dull italic">DoMasala</span>
+          <h1 className="text-5xl lg:text-6xl font-bold leading-tight p-8">
+            Đặt bàn tại
+            <span className="text-primary-dull italic"> DoMasala</span>
           </h1>
           <p className="text-gray-500 leading-relaxed max-w-lg mx-auto">
-            Hãy để chúng tôi chuẩn bị một trải nghiệm ẩm thực Ấn Độ tuyệt vời cho bạn và những người thân yêu.
+            Hãy để chúng tôi chuẩn bị một trải nghiệm ẩm thực Ấn Độ tuyệt vời
+            cho bạn và những người thân yêu.
           </p>
         </div>
       </section>
@@ -143,17 +190,32 @@ const Reserve = () => {
       <section className="px-6 md:px-16 lg:px-24 pb-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
           {[
-            { icon: MapPin, title: "Địa chỉ", desc: "123 Đường Hương Vị, Q.1, TP.HCM" },
-            { icon: Clock, title: "Giờ mở cửa", desc: "10:00 – 22:00 mỗi ngày" },
+            {
+              icon: MapPin,
+              title: "Địa chỉ",
+              desc: "123 Đường Hương Vị, Q.1, TP.HCM",
+            },
+            {
+              icon: Clock,
+              title: "Giờ mở cửa",
+              desc: "10:00 – 22:00 mỗi ngày",
+            },
             { icon: Phone, title: "Hotline", desc: "0901 234 567" },
           ].map(({ icon: Icon, title, desc }) => (
-            <div key={title} className="bg-white rounded-2xl p-5 flex items-center gap-4 shadow-sm">
+            <div
+              key={title}
+              className="bg-white rounded-2xl p-5 flex items-center gap-4 shadow-sm"
+            >
               <div className="w-10 h-10 rounded-xl bg-[#FEEFDB] flex items-center justify-center shrink-0">
                 <Icon className="w-5 h-5 text-primary-dull" />
               </div>
               <div>
-                <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">{title}</p>
-                <p className="text-sm text-gray-700 font-semibold mt-0.5">{desc}</p>
+                <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">
+                  {title}
+                </p>
+                <p className="text-sm text-gray-700 font-semibold mt-0.5">
+                  {desc}
+                </p>
               </div>
             </div>
           ))}
@@ -173,32 +235,42 @@ const Reserve = () => {
                       i < step
                         ? "bg-primary-dull text-white"
                         : i === step
-                        ? "bg-primary-dull text-white ring-4 ring-primary/40"
-                        : "bg-[#E3E2E0] text-gray-400"
+                          ? "bg-primary-dull text-white ring-4 ring-primary/40"
+                          : "bg-[#E3E2E0] text-gray-400"
                     }`}
                   >
                     {i < step ? <CheckCircle className="w-5 h-5" /> : i + 1}
                   </div>
-                  <span className={`text-xs mt-1.5 font-medium whitespace-nowrap ${i === step ? "text-primary-dull" : "text-gray-400"}`}>
+                  <span
+                    className={`text-xs mt-1.5 font-medium whitespace-nowrap ${i === step ? "text-primary-dull" : "text-gray-400"}`}
+                  >
                     {label}
                   </span>
                 </div>
                 {i < STEPS.length - 1 && (
-                  <div className={`w-16 md:w-24 h-0.5 mx-1 mb-5 transition-all duration-300 ${i < step ? "bg-primary-dull" : "bg-[#E3E2E0]"}`} />
+                  <div
+                    className={`w-16 md:w-24 h-0.5 mx-1 mb-5 transition-all duration-300 ${i < step ? "bg-primary-dull" : "bg-[#E3E2E0]"}`}
+                  />
                 )}
               </div>
             ))}
           </div>
 
           {/* Card */}
-          <div className="bg-white rounded-3xl shadow-sm p-8 md:p-10 animate-fadeIn" key={step}>
-
+          <div
+            className="bg-white rounded-3xl shadow-sm p-8 md:p-10 animate-fadeIn"
+            key={step}
+          >
             {/* Step 0: Thông tin */}
             {step === 0 && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-800 mb-1">Thông tin khách hàng</h2>
-                  <p className="text-sm text-gray-400">Vui lòng cung cấp thông tin để chúng tôi liên hệ xác nhận.</p>
+                  <h2 className="text-2xl font-bold text-gray-800 mb-1">
+                    Thông tin khách hàng
+                  </h2>
+                  <p className="text-sm text-gray-400">
+                    Vui lòng cung cấp thông tin để chúng tôi liên hệ xác nhận.
+                  </p>
                 </div>
 
                 <div>
@@ -279,8 +351,12 @@ const Reserve = () => {
             {step === 1 && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-800 mb-1">Chọn ngày & giờ</h2>
-                  <p className="text-sm text-gray-400">Chọn thời gian phù hợp để chúng tôi chuẩn bị tốt nhất.</p>
+                  <h2 className="text-2xl font-bold text-gray-800 mb-1">
+                    Chọn ngày & giờ
+                  </h2>
+                  <p className="text-sm text-gray-400">
+                    Chọn thời gian phù hợp để chúng tôi chuẩn bị tốt nhất.
+                  </p>
                 </div>
 
                 <div>
@@ -326,8 +402,12 @@ const Reserve = () => {
             {step === 2 && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-800 mb-1">Xác nhận đặt bàn</h2>
-                  <p className="text-sm text-gray-400">Kiểm tra lại thông tin trước khi gửi yêu cầu.</p>
+                  <h2 className="text-2xl font-bold text-gray-800 mb-1">
+                    Xác nhận đặt bàn
+                  </h2>
+                  <p className="text-sm text-gray-400">
+                    Kiểm tra lại thông tin trước khi gửi yêu cầu.
+                  </p>
                 </div>
 
                 <div className="bg-[#F5EDE3] rounded-2xl p-6 space-y-4">
@@ -338,20 +418,33 @@ const Reserve = () => {
                       icon: Calendar,
                       label: "Ngày",
                       value: new Date(form.date).toLocaleDateString("vi-VN", {
-                        weekday: "long", year: "numeric", month: "long", day: "numeric",
+                        weekday: "long",
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
                       }),
                     },
                     { icon: Clock, label: "Giờ đến", value: form.time },
-                    { icon: Users, label: "Số người", value: `${form.numberOfPeople} người` },
-                    ...(form.note ? [{ icon: FileText, label: "Ghi chú", value: form.note }] : []),
+                    {
+                      icon: Users,
+                      label: "Số người",
+                      value: `${form.numberOfPeople} người`,
+                    },
+                    ...(form.note
+                      ? [{ icon: FileText, label: "Ghi chú", value: form.note }]
+                      : []),
                   ].map(({ icon: Icon, label, value }) => (
                     <div key={label} className="flex items-start gap-3">
                       <div className="w-8 h-8 rounded-xl bg-white flex items-center justify-center shrink-0">
                         <Icon className="w-4 h-4 text-primary-dull" />
                       </div>
                       <div>
-                        <p className="text-xs text-gray-400 font-medium">{label}</p>
-                        <p className="text-sm text-gray-700 font-semibold mt-0.5">{value}</p>
+                        <p className="text-xs text-gray-400 font-medium">
+                          {label}
+                        </p>
+                        <p className="text-sm text-gray-700 font-semibold mt-0.5">
+                          {value}
+                        </p>
                       </div>
                     </div>
                   ))}
@@ -360,7 +453,9 @@ const Reserve = () => {
                 <div className="flex items-start gap-3 bg-amber-50 border border-amber-100 rounded-2xl p-4">
                   <Utensils className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
                   <p className="text-sm text-amber-700 leading-relaxed">
-                    Sau khi đặt bàn, nhân viên DoMasala sẽ gọi điện xác nhận trong vòng 30 phút. Bàn sẽ được giữ trong 15 phút kể từ giờ đặt.
+                    Sau khi đặt bàn, nhân viên DoMasala sẽ gọi điện xác nhận
+                    trong vòng 30 phút. Bàn sẽ được giữ trong 15 phút kể từ giờ
+                    đặt.
                   </p>
                 </div>
               </div>

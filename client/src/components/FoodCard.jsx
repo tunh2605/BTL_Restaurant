@@ -1,11 +1,11 @@
 import { CircleAlert, ShoppingCart } from "lucide-react";
-import React from "react";
 import { useNavigate } from "react-router-dom";
-import { categories } from "../assets/assets";
 
 const FoodCard = ({ food }) => {
+  console.log("food:", food);
+  console.log("category:", food.category);
   const navigate = useNavigate();
-  const categorySlug = categories.find((c) => c._id === food.category)?.slug;
+  const categorySlug = food.category?.slug;
   return (
     <div className="rounded-3xl overflow-hidden p-4 bg-white/80">
       <div className="aspect-4/3">
