@@ -1,179 +1,22 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Users,
   Search,
   ChevronDown,
-  Filter,
   ArrowUpDown,
   Eye,
   Trash2,
   X,
   Mail,
   Calendar,
-  ShieldCheck,
   User,
   AlertCircle,
   Crown,
   UserCheck,
+  RefreshCw,
 } from "lucide-react";
-
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-const mockUsers = [
-  {
-    id: "USR-001",
-    name: "Nguyễn Văn An",
-    email: "nguyenvanan@gmail.com",
-    avatar: null,
-    role: "user",
-    createdAt: "2024-01-15",
-    orders: 12,
-    reservations: 4,
-    totalSpent: 2850000,
-  },
-  {
-    id: "USR-002",
-    name: "Trần Thị Bích",
-    email: "tranthinhbich@gmail.com",
-    avatar: null,
-    role: "user",
-    createdAt: "2024-01-22",
-    orders: 7,
-    reservations: 2,
-    totalSpent: 1540000,
-  },
-  {
-    id: "USR-003",
-    name: "Lê Minh Khoa",
-    email: "leminhkhoa@gmail.com",
-    avatar: null,
-    role: "admin",
-    createdAt: "2023-12-10",
-    orders: 0,
-    reservations: 1,
-    totalSpent: 0,
-  },
-  {
-    id: "USR-004",
-    name: "Phạm Thu Hà",
-    email: "phamthuha@gmail.com",
-    avatar: null,
-    role: "user",
-    createdAt: "2024-02-03",
-    orders: 5,
-    reservations: 3,
-    totalSpent: 980000,
-  },
-  {
-    id: "USR-005",
-    name: "Hoàng Đức Minh",
-    email: "hoangducminh@gmail.com",
-    avatar: null,
-    role: "user",
-    createdAt: "2024-02-14",
-    orders: 18,
-    reservations: 6,
-    totalSpent: 4720000,
-  },
-  {
-    id: "USR-006",
-    name: "Vũ Thị Lan",
-    email: "vuthilan@gmail.com",
-    avatar: null,
-    role: "user",
-    createdAt: "2024-02-20",
-    orders: 3,
-    reservations: 1,
-    totalSpent: 645000,
-  },
-  {
-    id: "USR-007",
-    name: "Đỗ Quang Huy",
-    email: "doquanghuy@gmail.com",
-    avatar: null,
-    role: "user",
-    createdAt: "2024-03-01",
-    orders: 9,
-    reservations: 2,
-    totalSpent: 2100000,
-  },
-  {
-    id: "USR-008",
-    name: "Bùi Thị Mai",
-    email: "buithimai@gmail.com",
-    avatar: null,
-    role: "user",
-    createdAt: "2024-03-05",
-    orders: 2,
-    reservations: 0,
-    totalSpent: 310000,
-  },
-  {
-    id: "USR-009",
-    name: "Ngô Thanh Tùng",
-    email: "ngothanhtung@gmail.com",
-    avatar: null,
-    role: "user",
-    createdAt: "2024-03-10",
-    orders: 14,
-    reservations: 5,
-    totalSpent: 3650000,
-  },
-  {
-    id: "USR-010",
-    name: "Đinh Thu Nga",
-    email: "dinhthunha@gmail.com",
-    avatar: null,
-    role: "user",
-    createdAt: "2024-03-12",
-    orders: 6,
-    reservations: 2,
-    totalSpent: 1280000,
-  },
-  {
-    id: "USR-011",
-    name: "Lý Hồng Nhung",
-    email: "lyh0ngnhung@gmail.com",
-    avatar: null,
-    role: "user",
-    createdAt: "2024-03-15",
-    orders: 1,
-    reservations: 1,
-    totalSpent: 215000,
-  },
-  {
-    id: "USR-012",
-    name: "Trương Minh Tuấn",
-    email: "truongminhtuan@gmail.com",
-    avatar: null,
-    role: "user",
-    createdAt: "2024-03-18",
-    orders: 4,
-    reservations: 3,
-    totalSpent: 860000,
-  },
-  {
-    id: "USR-013",
-    name: "Cao Thị Yến",
-    email: "caothiyen@gmail.com",
-    avatar: null,
-    role: "user",
-    createdAt: "2024-03-20",
-    orders: 8,
-    reservations: 2,
-    totalSpent: 1920000,
-  },
-  {
-    id: "USR-014",
-    name: "Nguyễn Hoàng Tùng",
-    email: "tung062005@gmail.com",
-    avatar: null,
-    role: "admin",
-    createdAt: "2023-11-01",
-    orders: 0,
-    reservations: 0,
-    totalSpent: 0,
-  },
-];
+import axios from "axios";
+import toast from "react-hot-toast";
 
 const formatVND = (amount) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amount);
@@ -197,19 +40,19 @@ const UserAvatar = ({ user, size = "md" }) => {
   const colors = [
     "#C8714A", "#f59e0b", "#3b82f6", "#22c55e", "#8b5cf6", "#ec4899",
   ];
-  const color = colors[user.name.charCodeAt(0) % colors.length];
+  const color = colors[(user.name || "U").charCodeAt(0) % colors.length];
   return (
     <div
       className={`${sizeMap[size]} rounded-full flex items-center justify-center border-2 border-[#e8d0bc] font-semibold text-white shrink-0`}
       style={{ backgroundColor: color }}
     >
-      {user.name.charAt(0).toUpperCase()}
+      {(user.name || "U").charAt(0).toUpperCase()}
     </div>
   );
 };
 
 // ─── Detail Modal ─────────────────────────────────────────────────────────────
-const UserDetailModal = ({ user, onClose, onRoleChange }) => {
+const UserDetailModal = ({ user, onClose, onRoleChange, updating }) => {
   if (!user) return null;
   const isAdmin = user.role === "admin";
 
@@ -262,19 +105,16 @@ const UserDetailModal = ({ user, onClose, onRoleChange }) => {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             {[
-              { label: "Đơn hàng", value: user.orders, color: "#C8714A" },
-              { label: "Đặt bàn", value: user.reservations, color: "#3b82f6" },
-              { label: "Tổng chi", value: formatVND(user.totalSpent), color: "#22c55e", small: true },
+              { label: "Đặt bàn", value: user.reservationCount ?? 0, color: "#3b82f6" },
+              { label: "Ngày tham gia", value: new Date(user.createdAt).toLocaleDateString("vi-VN"), color: "#22c55e", small: true },
             ].map((stat) => (
               <div
                 key={stat.label}
                 className="bg-[#fdf8f5] rounded-xl px-3 py-3 text-center"
               >
-                <p
-                  className={`font-bold text-[#3a2010] ${stat.small ? "text-sm" : "text-xl"}`}
-                >
+                <p className={`font-bold text-[#3a2010] ${stat.small ? "text-sm" : "text-xl"}`}>
                   {stat.value}
                 </p>
                 <p className="text-xs text-[#a08060] mt-0.5">{stat.label}</p>
@@ -282,39 +122,30 @@ const UserDetailModal = ({ user, onClose, onRoleChange }) => {
             ))}
           </div>
 
-          {/* Meta */}
-          <div className="flex items-center gap-2 text-sm text-[#7a6050]">
-            <Calendar className="w-4 h-4 text-[#C8714A]" />
-            Tham gia:{" "}
-            <span className="font-medium text-[#3a2010]">
-              {new Date(user.createdAt).toLocaleDateString("vi-VN")}
-            </span>
-          </div>
-
           {/* Role change */}
           <div className="border-t border-[#f0e4d8] pt-4">
             <p className="text-xs text-[#b09070] mb-2">Đổi vai trò</p>
             <div className="flex gap-2">
               <button
-                onClick={() => onRoleChange(user.id, "user")}
-                disabled={user.role === "user"}
+                onClick={() => onRoleChange(user._id, "user")}
+                disabled={user.role === "user" || updating}
                 className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2 rounded-xl transition-all ${
                   user.role === "user"
                     ? "bg-[#C8714A] text-white cursor-default"
                     : "border border-[#e8d8c8] text-[#7a6050] hover:bg-[#fdf8f5]"
-                }`}
+                } disabled:opacity-50`}
               >
                 <User className="w-3.5 h-3.5" />
                 User
               </button>
               <button
-                onClick={() => onRoleChange(user.id, "admin")}
-                disabled={user.role === "admin"}
+                onClick={() => onRoleChange(user._id, "admin")}
+                disabled={user.role === "admin" || updating}
                 className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2 rounded-xl transition-all ${
                   user.role === "admin"
                     ? "bg-purple-600 text-white cursor-default"
                     : "border border-[#e8d8c8] text-[#7a6050] hover:bg-[#fdf8f5]"
-                }`}
+                } disabled:opacity-50`}
               >
                 <Crown className="w-3.5 h-3.5" />
                 Admin
@@ -329,25 +160,42 @@ const UserDetailModal = ({ user, onClose, onRoleChange }) => {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 const ListUser = () => {
-  const [users, setUsers] = useState(mockUsers);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [sortBy, setSortBy] = useState("created_desc");
   const [sortOpen, setSortOpen] = useState(false);
-  const [filterOpen, setFilterOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const PER_PAGE = 8;
 
   const sortRef = useRef(null);
-  const filterRef = useRef(null);
+
+  // ─── Fetch users ──────────────────────────────────────────────────────────
+  const fetchUsers = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data } = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/admin/users`
+      );
+      setUsers(data);
+    } catch (err) {
+      toast.error("Không thể tải danh sách người dùng.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   useEffect(() => {
     const handler = (e) => {
       if (sortRef.current && !sortRef.current.contains(e.target))
         setSortOpen(false);
-      if (filterRef.current && !filterRef.current.contains(e.target))
-        setFilterOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -367,9 +215,8 @@ const ListUser = () => {
       const q = search.toLowerCase();
       const matchSearch =
         !q ||
-        u.name.toLowerCase().includes(q) ||
-        u.email.toLowerCase().includes(q) ||
-        u.id.toLowerCase().includes(q);
+        u.name?.toLowerCase().includes(q) ||
+        u.email?.toLowerCase().includes(q);
       const matchRole = roleFilter === "all" || u.role === roleFilter;
       return matchSearch && matchRole;
     })
@@ -378,23 +225,52 @@ const ListUser = () => {
         return new Date(b.createdAt) - new Date(a.createdAt);
       if (sortBy === "created_asc")
         return new Date(a.createdAt) - new Date(b.createdAt);
-      if (sortBy === "name_asc") return a.name.localeCompare(b.name, "vi");
-      if (sortBy === "name_desc") return b.name.localeCompare(a.name, "vi");
-      if (sortBy === "orders_desc") return b.orders - a.orders;
-      if (sortBy === "spent_desc") return b.totalSpent - a.totalSpent;
+      if (sortBy === "name_asc") return (a.name || "").localeCompare(b.name || "", "vi");
+      if (sortBy === "name_desc") return (b.name || "").localeCompare(a.name || "", "vi");
+      if (sortBy === "reservations_desc")
+        return (b.reservationCount || 0) - (a.reservationCount || 0);
       return 0;
     });
 
   const totalPages = Math.ceil(filtered.length / PER_PAGE);
-  const paginated = filtered.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
+  const paginated = filtered.slice(
+    (currentPage - 1) * PER_PAGE,
+    currentPage * PER_PAGE
+  );
 
-  const handleRoleChange = (id, newRole) => {
-    setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, role: newRole } : u)));
-    setSelectedUser((prev) => (prev?.id === id ? { ...prev, role: newRole } : prev));
+  // ─── Handlers ─────────────────────────────────────────────────────────────
+  const handleRoleChange = async (id, newRole) => {
+    setUpdating(true);
+    try {
+      const { data } = await axios.put(
+        `${import.meta.env.VITE_API_URL}/api/admin/users/${id}/role`,
+        { role: newRole }
+      );
+      setUsers((prev) =>
+        prev.map((u) => (u._id === id ? { ...u, role: data.user.role } : u))
+      );
+      setSelectedUser((prev) =>
+        prev?._id === id ? { ...prev, role: data.user.role } : prev
+      );
+      toast.success("Cập nhật vai trò thành công.");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Cập nhật thất bại.");
+    } finally {
+      setUpdating(false);
+    }
   };
 
-  const handleDelete = (id) => {
-    setUsers((prev) => prev.filter((u) => u.id !== id));
+  const handleDelete = async (id) => {
+    if (!window.confirm("Bạn có chắc muốn xoá người dùng này?")) return;
+    try {
+      await axios.delete(
+        `${import.meta.env.VITE_API_URL}/api/admin/users/${id}`
+      );
+      setUsers((prev) => prev.filter((u) => u._id !== id));
+      toast.success("Đã xoá người dùng.");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Xoá thất bại.");
+    }
   };
 
   const sortOptions = [
@@ -402,8 +278,7 @@ const ListUser = () => {
     { value: "created_asc", label: "Tham gia cũ nhất" },
     { value: "name_asc", label: "Tên A → Z" },
     { value: "name_desc", label: "Tên Z → A" },
-    { value: "orders_desc", label: "Nhiều đơn nhất" },
-    { value: "spent_desc", label: "Chi tiêu cao nhất" },
+    { value: "reservations_desc", label: "Nhiều đặt bàn nhất" },
   ];
 
   const roleTabs = [
@@ -415,13 +290,23 @@ const ListUser = () => {
   return (
     <div className="space-y-6 pb-4">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl md:text-4xl font-bold text-[#3a2010]">
-          Quản lý người dùng
-        </h1>
-        <p className="text-sm text-[#a08060] mt-1">
-          Quản lý tài khoản và phân quyền người dùng
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-bold text-[#3a2010]">
+            Quản lý người dùng
+          </h1>
+          <p className="text-sm text-[#a08060] mt-1">
+            Quản lý tài khoản và phân quyền người dùng
+          </p>
+        </div>
+        <button
+          onClick={fetchUsers}
+          disabled={loading}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#e8d8c8] bg-white text-[#7a6050] hover:bg-[#fdf8f5] transition-colors text-sm disabled:opacity-50"
+        >
+          <RefreshCw className={`w-4 h-4 text-[#C8714A] ${loading ? "animate-spin" : ""}`} />
+          Làm mới
+        </button>
       </div>
 
       {/* ─── Stats Cards ─── */}
@@ -469,7 +354,9 @@ const ListUser = () => {
                 <Icon className="w-5 h-5" style={{ color: card.color }} />
               </div>
               <div>
-                <p className="text-xl font-bold text-[#3a2010]">{card.value}</p>
+                <p className="text-xl font-bold text-[#3a2010]">
+                  {loading ? "—" : card.value}
+                </p>
                 <p className="text-xs text-[#a08060]">{card.label}</p>
               </div>
             </div>
@@ -522,7 +409,7 @@ const ListUser = () => {
                   setSearch(e.target.value);
                   setCurrentPage(1);
                 }}
-                placeholder="Tìm tên, email, mã người dùng..."
+                placeholder="Tìm tên, email..."
                 className="bg-transparent text-sm outline-none text-[#5a3020] placeholder:text-[#c0a080] w-full"
               />
             </div>
@@ -535,7 +422,9 @@ const ListUser = () => {
               >
                 <ArrowUpDown className="w-4 h-4 text-[#C8714A]" />
                 {sortOptions.find((o) => o.value === sortBy)?.label}
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${sortOpen ? "rotate-180" : ""}`} />
+                <ChevronDown
+                  className={`w-3.5 h-3.5 transition-transform ${sortOpen ? "rotate-180" : ""}`}
+                />
               </button>
               {sortOpen && (
                 <div className="absolute right-0 top-[calc(100%+6px)] z-50 bg-white border border-[#ede0d4] rounded-2xl shadow-md overflow-hidden animate-slideUp w-52">
@@ -570,9 +459,7 @@ const ListUser = () => {
                   "Người dùng",
                   "Email",
                   "Vai trò",
-                  "Đơn hàng",
                   "Đặt bàn",
-                  "Chi tiêu",
                   "Ngày tham gia",
                   "Thao tác",
                 ].map((h) => (
@@ -586,9 +473,16 @@ const ListUser = () => {
               </tr>
             </thead>
             <tbody>
-              {paginated.length === 0 ? (
+              {loading ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-14 text-[#b09070] text-sm">
+                  <td colSpan={6} className="text-center py-14 text-[#b09070] text-sm">
+                    <RefreshCw className="w-6 h-6 mx-auto mb-2 text-[#C8714A] animate-spin" />
+                    Đang tải dữ liệu...
+                  </td>
+                </tr>
+              ) : paginated.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="text-center py-14 text-[#b09070] text-sm">
                     <AlertCircle className="w-8 h-8 mx-auto mb-2 text-[#e0caba]" />
                     Không tìm thấy người dùng nào
                   </td>
@@ -596,7 +490,7 @@ const ListUser = () => {
               ) : (
                 paginated.map((u) => (
                   <tr
-                    key={u.id}
+                    key={u._id}
                     className="border-b border-[#f9f2ec] hover:bg-[#fdf8f5] transition-colors"
                   >
                     {/* User info */}
@@ -606,9 +500,6 @@ const ListUser = () => {
                         <div>
                           <p className="font-semibold text-[#3a2010] whitespace-nowrap">
                             {u.name}
-                          </p>
-                          <p className="text-xs text-[#b09070] font-mono">
-                            {u.id}
                           </p>
                         </div>
                       </div>
@@ -636,13 +527,7 @@ const ListUser = () => {
                       </span>
                     </td>
                     <td className="py-3.5 px-4 text-center font-semibold text-[#3a2010]">
-                      {u.orders}
-                    </td>
-                    <td className="py-3.5 px-4 text-center font-semibold text-[#3a2010]">
-                      {u.reservations}
-                    </td>
-                    <td className="py-3.5 px-4 whitespace-nowrap font-medium text-[#3a2010]">
-                      {formatVND(u.totalSpent)}
+                      {u.reservationCount ?? 0}
                     </td>
                     <td className="py-3.5 px-4 text-[#a08060] whitespace-nowrap">
                       <span className="flex items-center gap-1">
@@ -660,7 +545,7 @@ const ListUser = () => {
                           <Eye className="w-3.5 h-3.5" />
                         </button>
                         <button
-                          onClick={() => handleDelete(u.id)}
+                          onClick={() => handleDelete(u._id)}
                           className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 text-[#a08060] hover:text-red-500 transition-colors"
                           title="Xoá"
                         >
@@ -721,6 +606,7 @@ const ListUser = () => {
           user={selectedUser}
           onClose={() => setSelectedUser(null)}
           onRoleChange={handleRoleChange}
+          updating={updating}
         />
       )}
     </div>

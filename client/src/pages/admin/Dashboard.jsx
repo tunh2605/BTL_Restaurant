@@ -14,6 +14,7 @@ import {
   XCircle,
   DollarSign,
 } from "lucide-react";
+import axios from "axios";
 import {
   LineChart,
   Line,
@@ -160,36 +161,7 @@ const statsCards = [
     color: "#C8714A",
     bg: "#FFF3EE",
   },
-  {
-    label: "Bàn đã đặt",
-    value: "84",
-    prev: "71",
-    change: "+18.3%",
-    up: true,
-    icon: CalendarCheck,
-    color: "#f59e0b",
-    bg: "#FFFBEB",
-  },
-  {
-    label: "Tổng người dùng",
-    value: "1,247",
-    prev: "1,189",
-    change: "+4.9%",
-    up: true,
-    icon: Users,
-    color: "#3b82f6",
-    bg: "#EFF6FF",
-  },
-  {
-    label: "Tổng doanh thu",
-    value: formatVNDShort(totalRevenue),
-    prev: formatVNDShort(prevTotalRevenue),
-    change: `${revenueChange > 0 ? "+" : ""}${revenueChange}%`,
-    up: parseFloat(revenueChange) >= 0,
-    icon: DollarSign,
-    color: "#22c55e",
-    bg: "#F0FDF4",
-  },
+  // reserved — these two cards now use real API data
 ];
 
 // ─── Custom Tooltip ───────────────────────────────────────────────────────────
@@ -317,6 +289,23 @@ const Dashboard = () => {
   const sortRef = useRef(null);
   const filterRef = useRef(null);
 
+  // ─── Real stats for users + reservations ──────────────────────────────────
+  const [dashStats, setDashStats] = useState(null);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const { data } = await axios.get(
+          `${import.meta.env.VITE_API_URL}/api/admin/dashboard-stats`
+        );
+        setDashStats(data);
+      } catch {
+        // silently fail – keep showing mock for other cards
+      }
+    };
+    fetchStats();
+  }, []);
+
   useEffect(() => {
     const handler = (e) => {
       if (sortRef.current && !sortRef.current.contains(e.target)) setSortOpen(false);
@@ -385,7 +374,60 @@ const Dashboard = () => {
 
       {/* ─── Stats Cards ─── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        {statsCards.map((card) => {
+        {[
+          {
+            label: "Tổng đơn đã đặt",
+            value: "262",
+            prev: "201",
+            change: "+30.3%",
+            up: true,
+            icon: ShoppingBag,
+            color: "#C8714A",
+            bg: "#FFF3EE",
+          },
+          {
+            label: "Bàn đã đặt",
+            value: dashStats ? String(dashStats.totalReservations) : "—",
+            prev: dashStats ? String(dashStats.reservationsLastMonth) : "—",
+            change: dashStats
+              ? dashStats.reservationsLastMonth > 0
+                ? `${dashStats.reservationsThisMonth - dashStats.reservationsLastMonth >= 0 ? "+" : ""}${(((dashStats.reservationsThisMonth - dashStats.reservationsLastMonth) / dashStats.reservationsLastMonth) * 100).toFixed(1)}%`
+                : dashStats.reservationsThisMonth > 0 ? "+100%" : "0%"
+              : "—",
+            up: dashStats
+              ? dashStats.reservationsThisMonth >= dashStats.reservationsLastMonth
+              : true,
+            icon: CalendarCheck,
+            color: "#f59e0b",
+            bg: "#FFFBEB",
+          },
+          {
+            label: "Tổng người dùng",
+            value: dashStats ? String(dashStats.totalUsers) : "—",
+            prev: dashStats ? String(dashStats.newUsersLastMonth) : "—",
+            change: dashStats
+              ? dashStats.newUsersLastMonth > 0
+                ? `${dashStats.newUsersThisMonth - dashStats.newUsersLastMonth >= 0 ? "+" : ""}${(((dashStats.newUsersThisMonth - dashStats.newUsersLastMonth) / dashStats.newUsersLastMonth) * 100).toFixed(1)}%`
+                : dashStats.newUsersThisMonth > 0 ? "+100%" : "0%"
+              : "—",
+            up: dashStats
+              ? dashStats.newUsersThisMonth >= dashStats.newUsersLastMonth
+              : true,
+            icon: Users,
+            color: "#3b82f6",
+            bg: "#EFF6FF",
+          },
+          {
+            label: "Tổng doanh thu",
+            value: formatVNDShort(totalRevenue),
+            prev: formatVNDShort(prevTotalRevenue),
+            change: `${revenueChange > 0 ? "+" : ""}${revenueChange}%`,
+            up: parseFloat(revenueChange) >= 0,
+            icon: DollarSign,
+            color: "#22c55e",
+            bg: "#F0FDF4",
+          },
+        ].map((card) => {
           const Icon = card.icon;
           return (
             <div

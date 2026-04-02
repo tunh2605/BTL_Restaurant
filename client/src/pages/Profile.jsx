@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   User,
   Mail,
@@ -12,14 +12,16 @@ import {
   LogOut,
   Camera,
   Package,
+  AlertCircle,
+  RefreshCw,
 } from "lucide-react";
 import { BlurCircle } from "../components/BlurCircle";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { assets } from "../assets/assets";
+import axios from "axios";
 
-// ─── Mock data ────────────────────────────────────────────────────────────────
-
+// ─── Mock orders (giữ nguyên) ─────────────────────────────────────────────────
 const MOCK_ORDERS = [
   {
     id: "ORD-001",
@@ -61,43 +63,15 @@ const MOCK_ORDERS = [
   },
 ];
 
-const MOCK_RESERVATIONS = [
-  {
-    id: "RES-001",
-    date: "2026-03-29",
-    time: "19:00",
-    numberOfPeople: 4,
-    note: "Dịp sinh nhật",
-    status: "success",
-  },
-  {
-    id: "RES-002",
-    date: "2026-03-15",
-    time: "12:30",
-    numberOfPeople: 2,
-    note: "",
-    status: "failed",
-  },
-  {
-    id: "RES-003",
-    date: "2026-02-14",
-    time: "18:00",
-    numberOfPeople: 2,
-    note: "Valentine dinner",
-    status: "success",
-  },
-  {
-    id: "RES-004",
-    date: "2026-01-20",
-    time: "20:00",
-    numberOfPeople: 6,
-    note: "Họp mặt gia đình",
-    status: "success",
-  },
-];
+// ─── Status config for reservations ──────────────────────────────────────────
+const RESERVATION_STATUS = {
+  pending:   { label: "Chờ xác nhận", color: "bg-amber-50 text-amber-600", icon: Clock },
+  confirmed: { label: "Đã xác nhận",  color: "bg-blue-50 text-blue-600",   icon: CheckCircle2 },
+  completed: { label: "Hoàn thành",   color: "bg-green-50 text-green-700", icon: CheckCircle2 },
+  cancelled: { label: "Đã huỷ",       color: "bg-red-50 text-red-500",     icon: XCircle },
+};
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
 const formatDate = (dateStr) =>
   new Date(dateStr).toLocaleDateString("vi-VN", {
     day: "2-digit",
@@ -105,7 +79,7 @@ const formatDate = (dateStr) =>
     year: "numeric",
   });
 
-const StatusBadge = ({ status }) =>
+const OrderStatusBadge = ({ status }) =>
   status === "success" ? (
     <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-green-600 bg-green-50 px-3 py-1 rounded-full">
       <CheckCircle2 className="w-3.5 h-3.5" />
@@ -118,36 +92,70 @@ const StatusBadge = ({ status }) =>
     </span>
   );
 
-// ─── Tabs ─────────────────────────────────────────────────────────────────────
+const ReservationStatusBadge = ({ status }) => {
+  const cfg = RESERVATION_STATUS[status] || RESERVATION_STATUS.pending;
+  const Icon = cfg.icon;
+  return (
+    <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full ${cfg.color}`}>
+      <Icon className="w-3.5 h-3.5" />
+      {cfg.label}
+    </span>
+  );
+};
 
+// ─── Tabs ─────────────────────────────────────────────────────────────────────
 const TABS = [
-  { key: "info", label: "Thông tin", icon: User },
-  { key: "orders", label: "Đơn hàng", icon: ShoppingBag },
-  { key: "reservations", label: "Đặt bàn", icon: CalendarDays },
+  { key: "info",         label: "Thông tin", icon: User },
+  { key: "orders",       label: "Đơn hàng",  icon: ShoppingBag },
+  { key: "reservations", label: "Đặt bàn",   icon: CalendarDays },
 ];
 
 // ─── Main component ───────────────────────────────────────────────────────────
-
 const Profile = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("info");
+
+  // ─── Real reservations ────────────────────────────────────────────────────
+  const [reservations, setReservations] = useState([]);
+  const [resLoading, setResLoading] = useState(false);
+  const [resFetched, setResFetched] = useState(false);
+
+  const fetchMyReservations = async () => {
+    if (!user) return;
+    setResLoading(true);
+    try {
+      const { data } = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/reservations/my`
+      );
+      setReservations(data);
+    } catch {
+      setReservations([]);
+    } finally {
+      setResLoading(false);
+      setResFetched(true);
+    }
+  };
+
+  // Fetch khi lần đầu mở tab đặt bàn
+  useEffect(() => {
+    if (activeTab === "reservations" && !resFetched) {
+      fetchMyReservations();
+    }
+  }, [activeTab]);
 
   const handleLogout = () => {
     logout();
     navigate("/");
   };
 
-  const avatarSrc = user?.avatar || assets.profile;
-  const displayName = user?.name || "Khách";
-  const displayEmail = user?.email || "";
-  const isAdmin = user?.role === "admin";
-  const joinDate = user?.createdAt
-    ? formatDate(user.createdAt)
-    : "—";
+  const avatarSrc   = user?.avatar || assets.profile;
+  const displayName = user?.name   || "Khách";
+  const displayEmail= user?.email  || "";
+  const isAdmin     = user?.role   === "admin";
+  const joinDate    = user?.createdAt ? formatDate(user.createdAt) : "—";
 
   const successOrders = MOCK_ORDERS.filter((o) => o.status === "success").length;
-  const successReservations = MOCK_RESERVATIONS.filter((r) => r.status === "success").length;
 
   return (
     <div className="min-h-screen relative overflow-hidden">
@@ -190,8 +198,12 @@ const Profile = () => {
           <div className="flex gap-4 shrink-0">
             {[
               { label: "Đơn hàng", value: successOrders, icon: Package },
-              { label: "Đặt bàn", value: successReservations, icon: CalendarDays },
-            ].map(({ label, value  }) => (
+              {
+                label: "Đặt bàn",
+                value: resFetched ? reservations.length : "—",
+                icon: CalendarDays,
+              },
+            ].map(({ label, value, icon: Icon }) => (
               <div key={label} className="bg-white rounded-2xl px-5 py-3 text-center shadow-sm min-w-[80px]">
                 <p className="text-2xl font-bold text-primary-dull">{value}</p>
                 <p className="text-xs text-gray-400 mt-0.5">{label}</p>
@@ -206,7 +218,7 @@ const Profile = () => {
         <div className="max-w-4xl mx-auto">
           {/* Tab bar */}
           <div className="flex gap-1 bg-white rounded-2xl p-1.5 shadow-sm mb-6 w-fit">
-            {TABS.map(({ key, label }) => (
+            {TABS.map(({ key, label, icon: Icon }) => (
               <button
                 key={key}
                 onClick={() => setActiveTab(key)}
@@ -230,19 +242,11 @@ const Profile = () => {
                 <h2 className="text-lg font-bold text-gray-800 mb-1">Thông tin tài khoản</h2>
 
                 {[
-                  { label: "Họ và tên", value: displayName, icon: User },
-                  { label: "Email", value: displayEmail, icon: Mail },
-                  {
-                    label: "Vai trò",
-                    value: isAdmin ? "Quản trị viên" : "Khách hàng",
-                    icon: ShieldCheck,
-                  },
-                  {
-                    label: "Ngày tham gia",
-                    value: joinDate,
-                    icon: Clock,
-                  },
-                ].map(({ label, value }) => (
+                  { label: "Họ và tên",   value: displayName,                          icon: User },
+                  { label: "Email",        value: displayEmail,                         icon: Mail },
+                  { label: "Vai trò",      value: isAdmin ? "Quản trị viên" : "Khách hàng", icon: ShieldCheck },
+                  { label: "Ngày tham gia",value: joinDate,                             icon: Clock },
+                ].map(({ label, value, icon: Icon }) => (
                   <div key={label} className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-xl bg-[#F5EDE3] flex items-center justify-center shrink-0">
                       <Icon className="w-4.5 h-4.5 text-primary-dull" />
@@ -260,9 +264,7 @@ const Profile = () => {
                 <div className="bg-white rounded-3xl p-6 shadow-sm">
                   <h3 className="text-sm font-bold text-gray-700 mb-4">Tài khoản</h3>
                   <div className="space-y-2">
-                    <button
-                      className="w-full flex items-center justify-between px-4 py-3 rounded-2xl bg-[#F5EDE3] text-sm font-medium text-gray-700 hover:bg-primary/60 transition cursor-pointer"
-                    >
+                    <button className="w-full flex items-center justify-between px-4 py-3 rounded-2xl bg-[#F5EDE3] text-sm font-medium text-gray-700 hover:bg-primary/60 transition cursor-pointer">
                       <span className="flex items-center gap-2">
                         <User className="w-4 h-4 text-primary-dull" />
                         Chỉnh sửa hồ sơ
@@ -289,7 +291,9 @@ const Profile = () => {
                   <p className="text-4xl font-bold mb-1">{MOCK_ORDERS.length}</p>
                   <p className="text-sm text-white/70">đơn hàng đã đặt</p>
                   <div className="mt-3 pt-3 border-t border-white/20">
-                    <p className="text-4xl font-bold mb-1">{MOCK_RESERVATIONS.length}</p>
+                    <p className="text-4xl font-bold mb-1">
+                      {resFetched ? reservations.length : "—"}
+                    </p>
                     <p className="text-sm text-white/70">lần đặt bàn</p>
                   </div>
                 </div>
@@ -311,7 +315,7 @@ const Profile = () => {
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-sm font-bold text-gray-800">{order.id}</span>
-                        <StatusBadge status={order.status} />
+                        <OrderStatusBadge status={order.status} />
                       </div>
                       <p className="text-xs text-gray-400 flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5" />
@@ -346,39 +350,55 @@ const Profile = () => {
             <div className="space-y-4 animate-fadeIn">
               <div className="flex items-center justify-between mb-2">
                 <h2 className="text-lg font-bold text-gray-800">Lịch sử đặt bàn</h2>
-                <span className="text-sm text-gray-400">{MOCK_RESERVATIONS.length} lần</span>
+                <span className="text-sm text-gray-400">
+                  {resFetched ? `${reservations.length} lần` : ""}
+                </span>
               </div>
 
-              {MOCK_RESERVATIONS.map((res) => (
-                <div key={res.id} className="bg-white rounded-3xl p-6 shadow-sm">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-[#F5EDE3] flex items-center justify-center shrink-0">
-                        <CalendarDays className="w-6 h-6 text-primary-dull" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-sm font-bold text-gray-800">{res.id}</span>
-                          <StatusBadge status={res.status} />
+              {resLoading ? (
+                <div className="flex items-center justify-center py-16">
+                  <RefreshCw className="w-6 h-6 text-primary-dull animate-spin" />
+                </div>
+              ) : !resFetched || reservations.length === 0 ? (
+                <div className="bg-white rounded-3xl p-10 shadow-sm text-center">
+                  <AlertCircle className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+                  <p className="text-gray-500 font-medium mb-1">Chưa có đặt bàn nào</p>
+                  <p className="text-sm text-gray-400">Hãy đặt bàn để trải nghiệm ẩm thực DoMasala!</p>
+                </div>
+              ) : (
+                reservations.map((res) => (
+                  <div key={res._id} className="bg-white rounded-3xl p-6 shadow-sm">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-[#F5EDE3] flex items-center justify-center shrink-0">
+                          <CalendarDays className="w-6 h-6 text-primary-dull" />
                         </div>
-                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3.5 h-3.5" />
-                            {formatDate(res.date)} · {res.time}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <User className="w-3.5 h-3.5" />
-                            {res.numberOfPeople} người
-                          </span>
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-sm font-bold text-gray-800 font-mono">
+                              #{res._id.slice(-8).toUpperCase()}
+                            </span>
+                            <ReservationStatusBadge status={res.status} />
+                          </div>
+                          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3.5 h-3.5" />
+                              {formatDate(res.date)} · {res.time}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <User className="w-3.5 h-3.5" />
+                              {res.numberOfPeople} người
+                            </span>
+                          </div>
+                          {res.note && (
+                            <p className="text-xs text-gray-400 mt-1.5 italic">"{res.note}"</p>
+                          )}
                         </div>
-                        {res.note && (
-                          <p className="text-xs text-gray-400 mt-1.5 italic">"{res.note}"</p>
-                        )}
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
 
               <button
                 onClick={() => navigate("/reserve")}

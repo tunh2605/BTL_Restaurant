@@ -1,203 +1,55 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import {
-  CalendarCheck,
+  CalendarDays,
   Search,
   ChevronDown,
-  Filter,
   ArrowUpDown,
-  Phone,
-  Users,
-  Clock,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
-  Eye,
-  Pencil,
   Trash2,
   X,
-  CalendarDays,
+  Clock,
+  User,
+  Phone,
   FileText,
+  AlertCircle,
+  RefreshCw,
+  CheckCircle2,
+  XCircle,
+  Loader2,
 } from "lucide-react";
+import axios from "axios";
+import toast from "react-hot-toast";
 
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-const mockReservations = [
-  {
-    id: "RES-001",
-    user: "Nguyễn Văn An",
-    phone: "0901234567",
-    date: "2024-03-30",
-    time: "18:00",
-    numberOfPeople: 4,
-    status: "confirmed",
-    note: "Bàn gần cửa sổ, kỷ niệm sinh nhật",
-    createdAt: "2024-03-28",
-  },
-  {
-    id: "RES-002",
-    user: "Trần Thị Bích",
-    phone: "0912345678",
-    date: "2024-03-30",
-    time: "19:30",
-    numberOfPeople: 2,
-    status: "pending",
-    note: "",
-    createdAt: "2024-03-28",
-  },
-  {
-    id: "RES-003",
-    user: "Lê Minh Khoa",
-    phone: "0923456789",
-    date: "2024-03-31",
-    time: "12:00",
-    numberOfPeople: 6,
-    status: "completed",
-    note: "Cần thêm ghế cho trẻ em",
-    createdAt: "2024-03-27",
-  },
-  {
-    id: "RES-004",
-    user: "Phạm Thu Hà",
-    phone: "0934567890",
-    date: "2024-04-01",
-    time: "20:00",
-    numberOfPeople: 3,
-    status: "cancelled",
-    note: "Đổi ngày không được",
-    createdAt: "2024-03-27",
-  },
-  {
-    id: "RES-005",
-    user: "Hoàng Đức Minh",
-    phone: "0945678901",
-    date: "2024-04-02",
-    time: "18:30",
-    numberOfPeople: 8,
-    status: "confirmed",
-    note: "Đặt tiệc công ty",
-    createdAt: "2024-03-26",
-  },
-  {
-    id: "RES-006",
-    user: "Vũ Thị Lan",
-    phone: "0956789012",
-    date: "2024-04-03",
-    time: "11:30",
-    numberOfPeople: 2,
-    status: "pending",
-    note: "",
-    createdAt: "2024-03-26",
-  },
-  {
-    id: "RES-007",
-    user: "Đỗ Quang Huy",
-    phone: "0967890123",
-    date: "2024-04-04",
-    time: "19:00",
-    numberOfPeople: 5,
-    status: "confirmed",
-    note: "Ăn chay, không dùng hành",
-    createdAt: "2024-03-25",
-  },
-  {
-    id: "RES-008",
-    user: "Bùi Thị Mai",
-    phone: "0978901234",
-    date: "2024-04-05",
-    time: "12:30",
-    numberOfPeople: 4,
-    status: "pending",
-    note: "",
-    createdAt: "2024-03-25",
-  },
-  {
-    id: "RES-009",
-    user: "Ngô Thanh Tùng",
-    phone: "0989012345",
-    date: "2024-04-06",
-    time: "18:00",
-    numberOfPeople: 2,
-    status: "completed",
-    note: "Kỷ niệm ngày cưới",
-    createdAt: "2024-03-24",
-  },
-  {
-    id: "RES-010",
-    user: "Đinh Thu Nga",
-    phone: "0990123456",
-    date: "2024-04-07",
-    time: "20:30",
-    numberOfPeople: 10,
-    status: "confirmed",
-    note: "Đặt phòng riêng",
-    createdAt: "2024-03-24",
-  },
-  {
-    id: "RES-011",
-    user: "Lý Hồng Nhung",
-    phone: "0901234568",
-    date: "2024-04-08",
-    time: "19:00",
-    numberOfPeople: 3,
-    status: "cancelled",
-    note: "Bận đột xuất",
-    createdAt: "2024-03-23",
-  },
-  {
-    id: "RES-012",
-    user: "Trương Minh Tuấn",
-    phone: "0912345679",
-    date: "2024-04-09",
-    time: "18:30",
-    numberOfPeople: 6,
-    status: "pending",
-    note: "Có người ăn chay",
-    createdAt: "2024-03-23",
-  },
-];
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+const formatDate = (dateStr) =>
+  new Date(dateStr).toLocaleDateString("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
 
 // ─── Status config ────────────────────────────────────────────────────────────
-const STATUS_CONFIG = {
-  pending: {
-    label: "Chờ xác nhận",
-    color: "bg-amber-50 text-amber-600",
-    dot: "bg-amber-400",
-    icon: Clock,
-  },
-  confirmed: {
-    label: "Đã xác nhận",
-    color: "bg-blue-50 text-blue-600",
-    dot: "bg-blue-400",
-    icon: CheckCircle2,
-  },
-  completed: {
-    label: "Hoàn thành",
-    color: "bg-green-50 text-green-700",
-    dot: "bg-green-500",
-    icon: CheckCircle2,
-  },
-  cancelled: {
-    label: "Đã huỷ",
-    color: "bg-red-50 text-red-500",
-    dot: "bg-red-400",
-    icon: XCircle,
-  },
+const STATUS_CFG = {
+  pending:   { label: "Chờ xác nhận", color: "bg-amber-50 text-amber-600 border-amber-200",   dot: "bg-amber-400" },
+  confirmed: { label: "Đã xác nhận",  color: "bg-blue-50 text-blue-600 border-blue-200",      dot: "bg-blue-400" },
+  completed: { label: "Hoàn thành",   color: "bg-green-50 text-green-700 border-green-200",   dot: "bg-green-500" },
+  cancelled: { label: "Đã huỷ",       color: "bg-red-50 text-red-500 border-red-200",         dot: "bg-red-400" },
 };
 
-const statusCounts = (list) =>
-  Object.keys(STATUS_CONFIG).reduce((acc, k) => {
-    acc[k] = list.filter((r) => r.status === k).length;
-    return acc;
-  }, {});
-
-// ─── Detail Modal ─────────────────────────────────────────────────────────────
-const DetailModal = ({ reservation, onClose, onStatusChange }) => {
-  if (!reservation) return null;
-  const cfg = STATUS_CONFIG[reservation.status];
-  const Icon = cfg.icon;
-
-  const nextStatuses = Object.keys(STATUS_CONFIG).filter(
-    (s) => s !== reservation.status
+const StatusBadge = ({ status }) => {
+  const cfg = STATUS_CFG[status] || STATUS_CFG.pending;
+  return (
+    <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border ${cfg.color}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+      {cfg.label}
+    </span>
   );
+};
+
+// ─── Detail / Edit Modal ──────────────────────────────────────────────────────
+const ReservationModal = ({ reservation: res, onClose, onStatusChange, updating }) => {
+  if (!res) return null;
+
+  const STATUSES = ["pending", "confirmed", "completed", "cancelled"];
 
   return (
     <div
@@ -210,14 +62,7 @@ const DetailModal = ({ reservation, onClose, onStatusChange }) => {
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#f0e4d8]">
-          <div>
-            <h3 className="font-bold text-[#3a2010] text-base">
-              Chi tiết đặt bàn
-            </h3>
-            <p className="text-xs text-[#b09070] mt-0.5 font-mono">
-              {reservation.id}
-            </p>
-          </div>
+          <h3 className="font-bold text-[#3a2010] text-base">Chi tiết đặt bàn</h3>
           <button
             onClick={onClose}
             className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#f5ede3] text-[#a08060] transition-colors"
@@ -228,82 +73,60 @@ const DetailModal = ({ reservation, onClose, onStatusChange }) => {
 
         {/* Body */}
         <div className="px-6 py-5 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-xs text-[#b09070] mb-1">Khách hàng</p>
-              <p className="font-semibold text-[#3a2010] text-sm">
-                {reservation.user}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-[#b09070] mb-1">Điện thoại</p>
-              <p className="font-medium text-[#3a2010] text-sm flex items-center gap-1">
-                <Phone className="w-3.5 h-3.5 text-[#C8714A]" />
-                {reservation.phone}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-[#b09070] mb-1">Ngày</p>
-              <p className="font-medium text-[#3a2010] text-sm flex items-center gap-1">
-                <CalendarDays className="w-3.5 h-3.5 text-[#C8714A]" />
-                {new Date(reservation.date).toLocaleDateString("vi-VN")}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-[#b09070] mb-1">Giờ</p>
-              <p className="font-medium text-[#3a2010] text-sm flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5 text-[#C8714A]" />
-                {reservation.time}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-[#b09070] mb-1">Số người</p>
-              <p className="font-medium text-[#3a2010] text-sm flex items-center gap-1">
-                <Users className="w-3.5 h-3.5 text-[#C8714A]" />
-                {reservation.numberOfPeople} người
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-[#b09070] mb-1">Ngày đặt</p>
-              <p className="font-medium text-[#7a6050] text-sm">
-                {new Date(reservation.createdAt).toLocaleDateString("vi-VN")}
-              </p>
-            </div>
-          </div>
-
-          {reservation.note && (
-            <div className="bg-[#fdf8f5] rounded-xl px-4 py-3">
-              <p className="text-xs text-[#b09070] mb-1 flex items-center gap-1">
-                <FileText className="w-3.5 h-3.5" /> Ghi chú
-              </p>
-              <p className="text-sm text-[#5a3020]">{reservation.note}</p>
-            </div>
-          )}
-
-          {/* Status */}
-          <div>
-            <p className="text-xs text-[#b09070] mb-2">Trạng thái hiện tại</p>
-            <span
-              className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full ${cfg.color}`}
-            >
-              <Icon className="w-3.5 h-3.5" />
-              {cfg.label}
+          {/* ID + status */}
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-xs text-[#a08060] bg-[#f5ede3] px-2.5 py-1 rounded-lg">
+              #{res._id.slice(-8).toUpperCase()}
             </span>
+            <StatusBadge status={res.status} />
           </div>
 
-          {/* Change status */}
-          <div>
-            <p className="text-xs text-[#b09070] mb-2">Đổi trạng thái</p>
-            <div className="flex flex-wrap gap-2">
-              {nextStatuses.map((s) => {
-                const c = STATUS_CONFIG[s];
+          {/* Info rows */}
+          <div className="space-y-3">
+            {[
+              { icon: User,        label: "Khách hàng",  value: res.name },
+              { icon: Phone,       label: "Điện thoại",  value: res.phone },
+              { icon: CalendarDays,label: "Ngày",        value: formatDate(res.date) },
+              { icon: Clock,       label: "Giờ",         value: res.time },
+              { icon: User,        label: "Số người",    value: `${res.numberOfPeople} người` },
+              ...(res.note ? [{ icon: FileText, label: "Ghi chú", value: res.note }] : []),
+              ...(res.user?.name ? [{ icon: User, label: "Tài khoản", value: `${res.user.name} (${res.user.email})` }] : []),
+            ].map(({ icon: Icon, label, value }) => (
+              <div key={label} className="flex items-start gap-3">
+                <div className="w-7 h-7 rounded-lg bg-[#fdf8f5] flex items-center justify-center shrink-0">
+                  <Icon className="w-3.5 h-3.5 text-[#C8714A]" />
+                </div>
+                <div>
+                  <p className="text-xs text-[#b09070]">{label}</p>
+                  <p className="text-sm text-[#3a2010] font-semibold mt-0.5">{value}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Status change */}
+          <div className="border-t border-[#f0e4d8] pt-4">
+            <p className="text-xs text-[#b09070] mb-2">Cập nhật trạng thái</p>
+            <div className="grid grid-cols-2 gap-2">
+              {STATUSES.map((s) => {
+                const cfg = STATUS_CFG[s];
+                const active = res.status === s;
                 return (
                   <button
                     key={s}
-                    onClick={() => onStatusChange(reservation.id, s)}
-                    className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-all hover:opacity-80 ${c.color} border-current/20`}
+                    onClick={() => !active && onStatusChange(res._id, s)}
+                    disabled={active || updating}
+                    className={`text-xs font-semibold py-2 rounded-xl border transition-all ${
+                      active
+                        ? `${cfg.color} cursor-default`
+                        : "border-[#e8d8c8] text-[#7a6050] hover:bg-[#fdf8f5]"
+                    } disabled:opacity-60`}
                   >
-                    {c.label}
+                    {updating && !active ? (
+                      <Loader2 className="w-3 h-3 animate-spin mx-auto" />
+                    ) : (
+                      cfg.label
+                    )}
                   </button>
                 );
               })}
@@ -317,88 +140,121 @@ const DetailModal = ({ reservation, onClose, onStatusChange }) => {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 const ListReservation = () => {
-  const [reservations, setReservations] = useState(mockReservations);
+  const [reservations, setReservations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("date_desc");
   const [sortOpen, setSortOpen] = useState(false);
-  const [filterOpen, setFilterOpen] = useState(false);
-  const [selectedRes, setSelectedRes] = useState(null);
+  const [selected, setSelected] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const PER_PAGE = 8;
 
   const sortRef = useRef(null);
-  const filterRef = useRef(null);
+
+  // ─── Fetch ─────────────────────────────────────────────────────────────────
+  const fetchReservations = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data } = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/reservations`
+      );
+      setReservations(data);
+    } catch {
+      toast.error("Không thể tải danh sách đặt bàn.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchReservations(); }, [fetchReservations]);
 
   useEffect(() => {
     const handler = (e) => {
       if (sortRef.current && !sortRef.current.contains(e.target))
         setSortOpen(false);
-      if (filterRef.current && !filterRef.current.contains(e.target))
-        setFilterOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const counts = statusCounts(reservations);
-  const totalAll = reservations.length;
+  // ─── Stats ─────────────────────────────────────────────────────────────────
+  const total     = reservations.length;
+  const pending   = reservations.filter((r) => r.status === "pending").length;
+  const confirmed = reservations.filter((r) => r.status === "confirmed").length;
+  const completed = reservations.filter((r) => r.status === "completed").length;
+  const cancelled = reservations.filter((r) => r.status === "cancelled").length;
 
+  // ─── Filter + sort ─────────────────────────────────────────────────────────
   const filtered = reservations
     .filter((r) => {
       const q = search.toLowerCase();
       const matchSearch =
         !q ||
-        r.user.toLowerCase().includes(q) ||
-        r.phone.includes(q) ||
-        r.id.toLowerCase().includes(q);
+        r.name?.toLowerCase().includes(q) ||
+        r.phone?.includes(q);
       const matchStatus = statusFilter === "all" || r.status === statusFilter;
       return matchSearch && matchStatus;
     })
     .sort((a, b) => {
-      if (sortBy === "date_desc")
-        return (
-          new Date(b.date + " " + b.time) - new Date(a.date + " " + a.time)
-        );
-      if (sortBy === "date_asc")
-        return (
-          new Date(a.date + " " + a.time) - new Date(b.date + " " + b.time)
-        );
-      if (sortBy === "people_desc") return b.numberOfPeople - a.numberOfPeople;
-      if (sortBy === "people_asc") return a.numberOfPeople - b.numberOfPeople;
-      if (sortBy === "created_desc")
-        return new Date(b.createdAt) - new Date(a.createdAt);
+      if (sortBy === "date_desc") return new Date(b.date) - new Date(a.date);
+      if (sortBy === "date_asc")  return new Date(a.date) - new Date(b.date);
+      if (sortBy === "created_desc") return new Date(b.createdAt) - new Date(a.createdAt);
+      if (sortBy === "created_asc")  return new Date(a.createdAt) - new Date(b.createdAt);
       return 0;
     });
 
   const totalPages = Math.ceil(filtered.length / PER_PAGE);
-  const paginated = filtered.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
+  const paginated  = filtered.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
 
-  const handleStatusChange = (id, newStatus) => {
-    setReservations((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, status: newStatus } : r))
-    );
-    setSelectedRes((prev) => (prev?.id === id ? { ...prev, status: newStatus } : prev));
+  // ─── Handlers ──────────────────────────────────────────────────────────────
+  const handleStatusChange = async (id, newStatus) => {
+    setUpdating(true);
+    try {
+      const { data } = await axios.put(
+        `${import.meta.env.VITE_API_URL}/api/reservations/${id}/status`,
+        { status: newStatus }
+      );
+      setReservations((prev) =>
+        prev.map((r) => (r._id === id ? { ...r, status: data.reservation.status } : r))
+      );
+      setSelected((prev) =>
+        prev?._id === id ? { ...prev, status: data.reservation.status } : prev
+      );
+      toast.success("Cập nhật trạng thái thành công.");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Cập nhật thất bại.");
+    } finally {
+      setUpdating(false);
+    }
   };
 
-  const handleDelete = (id) => {
-    setReservations((prev) => prev.filter((r) => r.id !== id));
+  const handleDelete = async (id) => {
+    if (!window.confirm("Bạn có chắc muốn xoá đặt bàn này?")) return;
+    try {
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/reservations/${id}`);
+      setReservations((prev) => prev.filter((r) => r._id !== id));
+      if (selected?._id === id) setSelected(null);
+      toast.success("Đã xoá đặt bàn.");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Xoá thất bại.");
+    }
   };
 
   const sortOptions = [
-    { value: "date_desc", label: "Ngày đặt mới nhất" },
-    { value: "date_asc", label: "Ngày đặt sớm nhất" },
-    { value: "people_desc", label: "Nhiều người nhất" },
-    { value: "people_asc", label: "Ít người nhất" },
-    { value: "created_desc", label: "Mới tạo nhất" },
+    { value: "date_desc",    label: "Ngày đặt mới nhất" },
+    { value: "date_asc",     label: "Ngày đặt cũ nhất" },
+    { value: "created_desc", label: "Tạo mới nhất" },
+    { value: "created_asc",  label: "Tạo cũ nhất" },
   ];
 
   const statusTabs = [
-    { value: "all", label: "Tất cả", count: totalAll },
-    { value: "pending", label: "Chờ xác nhận", count: counts.pending },
-    { value: "confirmed", label: "Đã xác nhận", count: counts.confirmed },
-    { value: "completed", label: "Hoàn thành", count: counts.completed },
-    { value: "cancelled", label: "Đã huỷ", count: counts.cancelled },
+    { value: "all",       label: "Tất cả",       count: total },
+    { value: "pending",   label: "Chờ xác nhận", count: pending },
+    { value: "confirmed", label: "Đã xác nhận",  count: confirmed },
+    { value: "completed", label: "Hoàn thành",   count: completed },
+    { value: "cancelled", label: "Đã huỷ",       count: cancelled },
   ];
 
   return (
@@ -410,77 +266,56 @@ const ListReservation = () => {
             Quản lý đặt bàn
           </h1>
           <p className="text-sm text-[#a08060] mt-1">
-            Theo dõi và quản lý các lịch đặt bàn của nhà hàng
+            Xem và cập nhật trạng thái các yêu cầu đặt bàn
           </p>
         </div>
+        <button
+          onClick={fetchReservations}
+          disabled={loading}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#e8d8c8] bg-white text-[#7a6050] hover:bg-[#fdf8f5] transition-colors text-sm disabled:opacity-50"
+        >
+          <RefreshCw className={`w-4 h-4 text-[#C8714A] ${loading ? "animate-spin" : ""}`} />
+          Làm mới
+        </button>
       </div>
 
       {/* ─── Stats Cards ─── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
-          {
-            label: "Tổng đặt bàn",
-            value: totalAll,
-            color: "#C8714A",
-            bg: "#FFF3EE",
-            icon: CalendarCheck,
-          },
-          {
-            label: "Chờ xác nhận",
-            value: counts.pending,
-            color: "#f59e0b",
-            bg: "#FFFBEB",
-            icon: Clock,
-          },
-          {
-            label: "Đã xác nhận",
-            value: counts.confirmed,
-            color: "#3b82f6",
-            bg: "#EFF6FF",
-            icon: CheckCircle2,
-          },
-          {
-            label: "Hoàn thành",
-            value: counts.completed,
-            color: "#22c55e",
-            bg: "#F0FDF4",
-            icon: CheckCircle2,
-          },
-        ].map((card) => {
-          const Icon = card.icon;
-          return (
+          { label: "Tổng đặt bàn",   value: total,     color: "#C8714A", bg: "#FFF3EE" },
+          { label: "Chờ xác nhận",   value: pending,   color: "#d97706", bg: "#FFFBEB" },
+          { label: "Đã xác nhận",    value: confirmed, color: "#2563eb", bg: "#EFF6FF" },
+          { label: "Hoàn thành",     value: completed, color: "#16a34a", bg: "#F0FDF4" },
+          { label: "Đã huỷ",         value: cancelled, color: "#dc2626", bg: "#FEF2F2" },
+        ].map((card) => (
+          <div
+            key={card.label}
+            className="bg-white rounded-2xl border border-[#ede0d4] px-4 py-4 flex items-center gap-3"
+          >
             <div
-              key={card.label}
-              className="bg-white rounded-2xl border border-[#ede0d4] px-4 py-4 flex items-center gap-3"
-            >
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                style={{ backgroundColor: card.bg }}
-              >
-                <Icon className="w-5 h-5" style={{ color: card.color }} />
-              </div>
-              <div>
-                <p className="text-xl font-bold text-[#3a2010]">{card.value}</p>
-                <p className="text-xs text-[#a08060]">{card.label}</p>
-              </div>
+              className="w-3 h-10 rounded-full shrink-0"
+              style={{ backgroundColor: card.color }}
+            />
+            <div>
+              <p className="text-xl font-bold text-[#3a2010]">
+                {loading ? "—" : card.value}
+              </p>
+              <p className="text-xs text-[#a08060]">{card.label}</p>
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
 
       {/* ─── Table Card ─── */}
       <div className="bg-white rounded-2xl border border-[#ede0d4]">
-        {/* Filters bar */}
+        {/* Filters */}
         <div className="px-5 pt-5 pb-4 border-b border-[#f0e4d8] space-y-3">
           {/* Status tabs */}
           <div className="flex flex-wrap gap-2">
             {statusTabs.map((tab) => (
               <button
                 key={tab.value}
-                onClick={() => {
-                  setStatusFilter(tab.value);
-                  setCurrentPage(1);
-                }}
+                onClick={() => { setStatusFilter(tab.value); setCurrentPage(1); }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
                   statusFilter === tab.value
                     ? "bg-[#C8714A] text-white shadow-sm"
@@ -501,30 +336,22 @@ const ListReservation = () => {
             ))}
           </div>
 
-          {/* Search + sort/filter */}
+          {/* Search + sort */}
           <div className="flex flex-col sm:flex-row gap-2">
-            {/* Search */}
             <div className="flex items-center gap-2 bg-[#F5F0EB] rounded-xl px-4 py-2 flex-1">
               <Search className="w-4 h-4 text-[#b09070] shrink-0" />
               <input
                 type="text"
                 value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setCurrentPage(1);
-                }}
-                placeholder="Tìm khách hàng, SĐT, mã đặt bàn..."
+                onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+                placeholder="Tìm tên, số điện thoại..."
                 className="bg-transparent text-sm outline-none text-[#5a3020] placeholder:text-[#c0a080] w-full"
               />
             </div>
 
-            {/* Sort */}
             <div className="relative" ref={sortRef}>
               <button
-                onClick={() => {
-                  setSortOpen((o) => !o);
-                  setFilterOpen(false);
-                }}
+                onClick={() => setSortOpen((o) => !o)}
                 className="flex items-center gap-2 text-sm px-4 py-2 rounded-xl border border-[#e8d8c8] bg-white text-[#7a6050] hover:bg-[#fdf8f5] transition-colors whitespace-nowrap"
               >
                 <ArrowUpDown className="w-4 h-4 text-[#C8714A]" />
@@ -536,10 +363,7 @@ const ListReservation = () => {
                   {sortOptions.map((opt) => (
                     <button
                       key={opt.value}
-                      onClick={() => {
-                        setSortBy(opt.value);
-                        setSortOpen(false);
-                      }}
+                      onClick={() => { setSortBy(opt.value); setSortOpen(false); }}
                       className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
                         sortBy === opt.value
                           ? "bg-[#FFF3EE] text-[#C8714A] font-semibold"
@@ -560,16 +384,7 @@ const ListReservation = () => {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[#f0e4d8]">
-                {[
-                  "Mã đặt",
-                  "Khách hàng",
-                  "Liên hệ",
-                  "Ngày & Giờ",
-                  "Số người",
-                  "Ghi chú",
-                  "Trạng thái",
-                  "Thao tác",
-                ].map((h) => (
+                {["Mã đặt bàn", "Khách hàng", "Ngày · Giờ", "Số người", "Ghi chú", "Trạng thái", "Thao tác"].map((h) => (
                   <th
                     key={h}
                     className="text-left text-xs font-semibold text-[#b09070] uppercase tracking-wider py-3 px-4 whitespace-nowrap"
@@ -580,85 +395,85 @@ const ListReservation = () => {
               </tr>
             </thead>
             <tbody>
-              {paginated.length === 0 ? (
+              {loading ? (
                 <tr>
-                  <td
-                    colSpan={8}
-                    className="text-center py-14 text-[#b09070] text-sm"
-                  >
+                  <td colSpan={7} className="text-center py-14 text-[#b09070] text-sm">
+                    <RefreshCw className="w-6 h-6 mx-auto mb-2 text-[#C8714A] animate-spin" />
+                    Đang tải dữ liệu...
+                  </td>
+                </tr>
+              ) : paginated.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="text-center py-14 text-[#b09070] text-sm">
                     <AlertCircle className="w-8 h-8 mx-auto mb-2 text-[#e0caba]" />
                     Không tìm thấy đặt bàn nào
                   </td>
                 </tr>
               ) : (
-                paginated.map((r) => {
-                  const cfg = STATUS_CONFIG[r.status];
-                  const Icon = cfg.icon;
-                  return (
-                    <tr
-                      key={r.id}
-                      className="border-b border-[#f9f2ec] hover:bg-[#fdf8f5] transition-colors"
-                    >
-                      <td className="py-3.5 px-4 font-mono font-semibold text-[#C8714A] whitespace-nowrap text-xs">
-                        {r.id}
-                      </td>
-                      <td className="py-3.5 px-4 font-medium text-[#3a2010] whitespace-nowrap">
-                        {r.user}
-                      </td>
-                      <td className="py-3.5 px-4 text-[#7a6050] whitespace-nowrap">
-                        <span className="flex items-center gap-1">
-                          <Phone className="w-3.5 h-3.5 text-[#b09070]" />
-                          {r.phone}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 whitespace-nowrap">
-                        <p className="font-medium text-[#3a2010]">
-                          {new Date(r.date).toLocaleDateString("vi-VN")}
-                        </p>
-                        <p className="text-xs text-[#b09070]">{r.time}</p>
-                      </td>
-                      <td className="py-3.5 px-4 whitespace-nowrap">
-                        <span className="flex items-center gap-1 text-[#5a3020]">
-                          <Users className="w-3.5 h-3.5 text-[#b09070]" />
-                          {r.numberOfPeople}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 text-[#7a6050] max-w-[140px] truncate">
-                        {r.note || (
-                          <span className="text-[#c0a080] italic text-xs">
-                            Không có
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span
-                          className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full whitespace-nowrap ${cfg.color}`}
-                        >
-                          <Icon className="w-3 h-3" />
-                          {cfg.label}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => setSelectedRes(r)}
-                            className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-[#F5EDE3] text-[#a08060] hover:text-[#C8714A] transition-colors"
-                            title="Xem chi tiết"
-                          >
-                            <Eye className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(r.id)}
-                            className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 text-[#a08060] hover:text-red-500 transition-colors"
-                            title="Xoá"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
+                paginated.map((r) => (
+                  <tr
+                    key={r._id}
+                    className="border-b border-[#f9f2ec] hover:bg-[#fdf8f5] transition-colors cursor-pointer"
+                    onClick={() => setSelected(r)}
+                  >
+                    {/* ID */}
+                    <td className="py-3.5 px-4">
+                      <span className="font-mono text-xs text-[#a08060] bg-[#f5ede3] px-2 py-0.5 rounded-lg">
+                        #{r._id.slice(-8).toUpperCase()}
+                      </span>
+                    </td>
+                    {/* Customer */}
+                    <td className="py-3.5 px-4">
+                      <p className="font-semibold text-[#3a2010] whitespace-nowrap">{r.name}</p>
+                      <p className="text-xs text-[#a08060] flex items-center gap-1 mt-0.5">
+                        <Phone className="w-3 h-3" />
+                        {r.phone}
+                      </p>
+                    </td>
+                    {/* Date · Time */}
+                    <td className="py-3.5 px-4 whitespace-nowrap">
+                      <p className="font-semibold text-[#3a2010]">{formatDate(r.date)}</p>
+                      <p className="text-xs text-[#a08060] flex items-center gap-1 mt-0.5">
+                        <Clock className="w-3 h-3" />
+                        {r.time}
+                      </p>
+                    </td>
+                    {/* People */}
+                    <td className="py-3.5 px-4 text-center font-semibold text-[#3a2010]">
+                      {r.numberOfPeople}
+                    </td>
+                    {/* Note */}
+                    <td className="py-3.5 px-4 max-w-[160px]">
+                      <p className="text-xs text-[#a08060] truncate italic">
+                        {r.note || "—"}
+                      </p>
+                    </td>
+                    {/* Status */}
+                    <td className="py-3.5 px-4" onClick={(e) => e.stopPropagation()}>
+                      <select
+                        value={r.status}
+                        onChange={(e) => handleStatusChange(r._id, e.target.value)}
+                        disabled={updating}
+                        className="text-xs border border-[#e8d8c8] rounded-xl px-2 py-1.5 bg-white text-[#3a2010] cursor-pointer outline-none focus:border-[#C8714A] transition-colors disabled:opacity-50"
+                      >
+                        <option value="pending">Chờ xác nhận</option>
+                        <option value="confirmed">Đã xác nhận</option>
+                        <option value="completed">Hoàn thành</option>
+                        <option value="cancelled">Đã huỷ</option>
+                      </select>
+                    </td>
+                    {/* Actions */}
+                    <td className="py-3.5 px-4" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={() => handleDelete(r._id)}
+                        className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 text-[#a08060] hover:text-red-500 transition-colors"
+                        title="Xoá"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>
@@ -669,8 +484,7 @@ const ListReservation = () => {
           <div className="flex items-center justify-between px-5 py-4 border-t border-[#f0e4d8]">
             <p className="text-xs text-[#b09070]">
               {(currentPage - 1) * PER_PAGE + 1}–
-              {Math.min(currentPage * PER_PAGE, filtered.length)} /{" "}
-              {filtered.length} kết quả
+              {Math.min(currentPage * PER_PAGE, filtered.length)} / {filtered.length} đặt bàn
             </p>
             <div className="flex items-center gap-1">
               <button
@@ -694,9 +508,7 @@ const ListReservation = () => {
                 </button>
               ))}
               <button
-                onClick={() =>
-                  setCurrentPage((p) => Math.min(totalPages, p + 1))
-                }
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
                 className="px-3 py-1.5 text-xs rounded-xl border border-[#e8d8c8] text-[#7a6050] hover:bg-[#fdf8f5] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
@@ -708,11 +520,12 @@ const ListReservation = () => {
       </div>
 
       {/* Detail Modal */}
-      {selectedRes && (
-        <DetailModal
-          reservation={selectedRes}
-          onClose={() => setSelectedRes(null)}
+      {selected && (
+        <ReservationModal
+          reservation={selected}
+          onClose={() => setSelected(null)}
           onStatusChange={handleStatusChange}
+          updating={updating}
         />
       )}
     </div>

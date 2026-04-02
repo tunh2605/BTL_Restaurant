@@ -7,6 +7,7 @@ import foodRouter from "./routes/foodRoutes.js";
 import userRouter from "./routes/userRoutes.js";
 import adminRouter from "./routes/adminRoutes.js";
 import categoryRouter from "./routes/categoryRoutes.js";
+import reservationRouter from "./routes/reservationRoutes.js";
 import { createAuthRouter } from "./routes/authRouter.js";
 import { errorMiddleware } from "./errors/errorMiddleware.js";
 
@@ -52,6 +53,7 @@ app.use("/api/foods", foodRouter);
 app.use("/api/users", userRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/categories", categoryRouter);
+app.use("/api/reservations", reservationRouter);
 app.use("/api/auth", createAuthRouter(env));
 
 app.use(errorMiddleware);
