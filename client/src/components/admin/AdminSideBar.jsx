@@ -8,10 +8,11 @@ import {
   BarChart3,
   Megaphone,
   LogOut,
+  Store,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 
-const navGroups = [
+const getNavGroups = (isHQAdmin) => [
   {
     label: "Ẩm thực & Danh mục",
     items: [
@@ -24,6 +25,9 @@ const navGroups = [
       { label: "Orders", to: "/admin/orders", icon: ShoppingBag },
       { label: "Reservations", to: "/admin/reservations", icon: CalendarCheck },
       { label: "Users", to: "/admin/users", icon: Users },
+      ...(isHQAdmin
+        ? [{ label: "Restaurants", to: "/admin/restaurant", icon: Store }]
+        : []),
     ],
   },
   {
@@ -36,13 +40,15 @@ const navGroups = [
 ];
 
 const AdminSideBar = () => {
-  const { logout } = useAuth();
+  const { logout, isHQAdmin } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
+
+  const navGroups = getNavGroups(isHQAdmin);
 
   return (
     <aside className=" h-screen flex flex-col shrink-0 bg-[#F5EDE3] border-r border-[#e8d8c8] w-16 md:w-64 transition-all duration-300">

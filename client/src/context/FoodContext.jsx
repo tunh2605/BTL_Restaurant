@@ -1,37 +1,45 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
 import axios from "axios";
+import toast from "react-hot-toast";
 
 const FoodContext = createContext();
+
+const API = import.meta.env.VITE_API_URL;
 
 export const FoodProvider = ({ children }) => {
   const [foods, setFoods] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchFoods = async (categoryId = "") => {
+  const fetchFoods = useCallback(async (categoryId = "") => {
     try {
       const url = categoryId
-        ? `${import.meta.env.VITE_API_URL}/api/foods/all-foods?category=${categoryId}`
-        : `${import.meta.env.VITE_API_URL}/api/foods/all-foods`;
-      const { data } = await axios.get(url);
-      setFoods(data);
-    } catch (error) {
-      console.error("Lỗi khi lấy danh sách món ăn:", error);
-    }
-  };
+        ? `${API}/api/foods/all-foods?category=${categoryId}`
+        : `${API}/api/foods/all-foods`;
 
-  const fetchCategories = async () => {
-    try {
-      const { data } = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/categories/all-categories`,
-      );
-      console.log("categories:", typeof data, Array.isArray(data), data);
-      setCategories(data);
+      const { data } = await axios.get(url);
+
+      setFoods(Array.isArray(data) ? data : (data.data ?? []));
     } catch (error) {
-      console.error("status:", error.response?.status);
-      console.error("data:", error.response?.data);
+      toast.error("Không thể tải danh sách món ăn");
     }
-  };
+  }, []);
+
+  const fetchCategories = useCallback(async () => {
+    try {
+      const { data } = await axios.get(`${API}/api/categories/all-categories`);
+
+      setCategories(Array.isArray(data) ? data : (data.data ?? []));
+    } catch (error) {
+      toast.error("Không thể tải danh mục");
+    }
+  }, []);
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -40,10 +48,7 @@ export const FoodProvider = ({ children }) => {
       setLoading(false);
     };
     fetchAll();
-  }, []);
-
-  const refreshFoods = () => fetchFoods();
-  const refreshCategories = () => fetchCategories();
+  }, [fetchFoods, fetchCategories]);
 
   return (
     <FoodContext.Provider
@@ -51,9 +56,9 @@ export const FoodProvider = ({ children }) => {
         foods,
         categories,
         loading,
-        setFoods,
-        refreshFoods,
-        refreshCategories,
+        fetchFoods,
+        refreshFoods: fetchFoods,
+        refreshCategories: fetchCategories,
       }}
     >
       {children}
