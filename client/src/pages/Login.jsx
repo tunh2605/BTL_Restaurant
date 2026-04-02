@@ -10,7 +10,7 @@ const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
   const { login } = useAuth();
 
   const handleLogin = async (e) => {
@@ -31,7 +31,8 @@ const LoginPage = () => {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/google`;
+    // Redirect tới backend Google OAuth endpoint
+    window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/login-by-oauth`;
   };
 
   return (

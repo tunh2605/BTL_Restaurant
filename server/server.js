@@ -2,10 +2,14 @@ import connectDB from "./configs/db.js";
 import express from "express";
 import "dotenv/config";
 import cors from "cors";
+import { auth } from "express-openid-connect";
 import foodRouter from "./routes/foodRoutes.js";
 import userRouter from "./routes/userRoutes.js";
 import adminRouter from "./routes/adminRoutes.js";
 import categoryRouter from "./routes/categoryRoutes.js";
+import reservationRouter from "./routes/reservationRoutes.js";
+import { createAuthRouter } from "./routes/authRouter.js";
+import { errorMiddleware } from "./errors/errorMiddleware.js";
 import restaurantRouter from "./routes/restaurantRoutes.js";
 
 const app = express();
@@ -13,6 +17,30 @@ const port = 3000;
 
 app.use(express.json());
 app.use(cors());
+
+const env = process.env;
+
+// OAuth middleware phải được mount SỚM NHẤT, trước tất cả routes
+app.use(
+	auth({
+		issuerBaseURL: env.ISSUER_BASE_URL,
+		baseURL: env.BASE_URL,
+		clientID: env.CLIENT_ID,
+		secret: env.SECRET,
+		clientSecret: env.CLIENT_SECRET,
+		authRequired: false,
+		idpLogout: false,
+		authorizationParams: {
+			response_type: "code",
+			scope: "openid profile email",
+		},
+		routes: {
+			login: false,
+			logout: false,
+			callback: "/api/auth/callback",
+		},
+	}),
+);
 
 app.use(async (req, res, next) => {
   await connectDB();
@@ -27,6 +55,10 @@ app.use("/api/foods", foodRouter);
 app.use("/api/users", userRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/categories", categoryRouter);
+app.use("/api/reservations", reservationRouter);
+app.use("/api/auth", createAuthRouter(env));
+
+app.use(errorMiddleware);
 app.use("/api/restaurants", restaurantRouter);
 
 app.listen(port, () => {
