@@ -105,7 +105,7 @@ const LoginPage = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#E8906A] hover:bg-[#d97d58] text-white font-semibold rounded-full py-3 transition-colors duration-200 disabled:opacity-60 mt-2"
+            className="w-full bg-[#E8906A] hover:bg-[#d97d58] text-white font-semibold rounded-full py-3 transition-colors duration-200 disabled:opacity-60 mt-2 cursor-pointer"
           >
             {loading ? "Đang đăng nhập..." : "Đăng nhập"}
           </button>
@@ -121,7 +121,7 @@ const LoginPage = () => {
 
         <button
           onClick={handleGoogleLogin}
-          className="w-full flex items-center justify-center gap-3 border border-gray-200 rounded-full py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+          className="w-full flex items-center justify-center gap-3 border border-gray-200 rounded-full py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors duration-200 cursor-pointer"
         >
           <svg width="18" height="18" viewBox="0 0 48 48">
             <path

@@ -7,7 +7,7 @@ const FoodCard = ({ food }) => {
   const navigate = useNavigate();
   const categorySlug = food.category?.slug;
   return (
-    <div className="rounded-3xl overflow-hidden p-4 bg-white/80">
+    <div className="rounded-3xl overflow-hidden p-4 bg-white/80 hover:-translate-y-2 transition-all">
       <div className="aspect-4/3">
         <img
           src={food.image}
