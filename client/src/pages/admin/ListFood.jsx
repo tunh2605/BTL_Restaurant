@@ -10,8 +10,10 @@ const ListFood = () => {
     <>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
         <div className="flex flex-col leading-8">
-          <p className="text-2xl md:text-4xl font-bold">Thực đơn & danh mục</p>
-          <p className="text-sm md:text-md font-medium text-[#777775]">
+          <p className="text-2xl md:text-4xl font-bold text-[#3a2010]">
+            Thực đơn & danh mục
+          </p>
+          <p className="text-sm mt-1 md:text-md text-[#a08060]">
             Quản lí linh hồn của DoMasala - Các hương vị và sự đa dạng
           </p>
         </div>

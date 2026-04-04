@@ -15,6 +15,7 @@ import axios from "axios";
 import ConfirmModal from "./ConfirmModal";
 import UpdateCategoryForm from "./UpdateCategoryForm";
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 const StatusBadge = ({ isAvailable }) => (
   <div className="flex items-center gap-1.5">
@@ -52,6 +53,7 @@ const ListFoodContent = ({ isHQAdmin = true }) => {
   const [activeCategory, setActiveCategory] = useState("all");
   const [visibleCount, setVisibleCount] = useState(4);
   const [modal, setModal] = useState(MODAL_CLOSED);
+  const navigate = useNavigate();
 
   const scrollRef = useRef();
   const {
@@ -69,6 +71,7 @@ const ListFoodContent = ({ isHQAdmin = true }) => {
   if (loading) return <div>Đang tải...</div>;
 
   const openModal = (type, data = null) => setModal({ type, data });
+
   const closeModal = () => setModal(MODAL_CLOSED);
 
   const handleCategoryChange = (categoryId) => {
@@ -85,6 +88,20 @@ const ListFoodContent = ({ isHQAdmin = true }) => {
       );
       toast.success(data.message);
       await refreshCategories();
+      closeModal();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Xóa thất bại");
+    }
+  };
+
+  const handleDeleteFood = async () => {
+    if (!modal.data) return;
+    try {
+      const { data } = await axios.delete(
+        `${import.meta.env.VITE_API_URL}/api/foods/delete/${modal.data._id}`,
+      );
+      toast.success(data.message);
+      await fetchFoods();
       closeModal();
     } catch (err) {
       toast.error(err.response?.data?.message || "Xóa thất bại");
@@ -132,7 +149,7 @@ const ListFoodContent = ({ isHQAdmin = true }) => {
                     foodCount={cat.foodCount}
                     isHQAdmin={isHQAdmin}
                     index={i}
-                    onDelete={(cat) => openModal("delete", cat)}
+                    onDelete={(cat) => openModal("deleteCategory", cat)}
                     onEdit={(cat) => openModal("update", cat)}
                   />
                 </div>
@@ -218,10 +235,16 @@ const ListFoodContent = ({ isHQAdmin = true }) => {
 
                 {isHQAdmin && (
                   <div className="col-span-1 flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                    <button className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors">
+                    <button
+                      className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors"
+                      onClick={() => navigate(`/admin/foods/edit/${food._id}`)}
+                    >
                       <Pencil className="w-4 h-4" />
                     </button>
-                    <button className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors">
+                    <button
+                      onClick={() => openModal("deleteFood", food)}
+                      className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+                    >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
@@ -253,10 +276,18 @@ const ListFoodContent = ({ isHQAdmin = true }) => {
       />
 
       <ConfirmModal
-        open={modal.type === "delete"}
+        open={modal.type === "deleteCategory"}
         onClose={closeModal}
         onConfirm={handleConfirmDelete}
         title="Xóa danh mục?"
+        description={`Bạn có chắc muốn xóa "${modal.data?.name}" không?`}
+      />
+
+      <ConfirmModal
+        open={modal.type === "deleteFood"}
+        onClose={closeModal}
+        onConfirm={handleDeleteFood}
+        title="Xóa món ăn?"
         description={`Bạn có chắc muốn xóa "${modal.data?.name}" không?`}
       />
     </>

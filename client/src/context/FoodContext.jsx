@@ -17,6 +17,11 @@ export const FoodProvider = ({ children }) => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [restaurants, setRestaurants] = useState([]);
+  const [statsData, setStatsData] = useState({
+    total: 0,
+    active: 0,
+    staffCount: 0,
+  });
 
   const fetchFoods = useCallback(async (categoryId = "") => {
     try {
@@ -53,23 +58,41 @@ export const FoodProvider = ({ children }) => {
     }
   }, []);
 
+  const fetchStats = useCallback(async () => {
+    try {
+      const { data } = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/restaurants/stats`,
+      );
+      setStatsData(data);
+    } catch (err) {
+      console.log("Lỗi khi catch stats" + err);
+    }
+  }, []);
+
   useEffect(() => {
     const fetchAll = async () => {
       setLoading(true);
-      await Promise.all([fetchFoods(), fetchCategories(), fetchRestaurants()]);
+      await Promise.all([
+        fetchFoods(),
+        fetchCategories(),
+        fetchRestaurants(),
+        fetchStats(),
+      ]);
       setLoading(false);
     };
     fetchAll();
-  }, [fetchFoods, fetchCategories, fetchRestaurants]);
+  }, [fetchFoods, fetchCategories, fetchRestaurants, fetchStats]);
 
   return (
     <FoodContext.Provider
       value={{
         foods,
+        statsData,
         categories,
         restaurants,
         loading,
         fetchFoods,
+        fetchStats,
         fetchRestaurants,
         refreshFoods: fetchFoods,
         refreshCategories: fetchCategories,

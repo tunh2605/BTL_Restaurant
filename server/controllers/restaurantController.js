@@ -1,5 +1,7 @@
 import Restaurant from "../models/Restaurant.js";
-import cloudinary from "cloudinary";
+import cloudinary from "../configs/cloudinary.js";
+import User from "../models/User.js";
+import Food from "../models/Food.js";
 
 export const getRestaurants = async (req, res) => {
   try {
@@ -29,9 +31,10 @@ export const getRestaurantById = async (req, res) => {
 
 export const addRestaurant = async (req, res) => {
   try {
-    let { name, address, images, phone, openTime, closeTime } = req.body;
+    let { name, address, images, phone, openTime, closeTime, isOpen } =
+      req.body;
 
-    if (!name || !address || !phone) {
+    if (!name || !address || !phone || !openTime || !closeTime) {
       return res.status(400).json({
         success: false,
         message: "Thiếu thông tin bắt buộc",
@@ -45,8 +48,12 @@ export const addRestaurant = async (req, res) => {
     const restaurant = await Restaurant.create({
       name,
       address,
-      images,
+      images: (images || []).map((url) => ({
+        url,
+        public_id: url.split("/").pop().split(".")[0],
+      })),
       phone,
+      isOpen: isOpen ?? true,
       openTime,
       closeTime,
     });
@@ -87,31 +94,59 @@ export const updateRestaurant = async (req, res) => {
 
 export const deleteRestaurant = async (req, res) => {
   const { id } = req.params;
+
   try {
     const restaurant = await Restaurant.findById(id);
 
     if (!restaurant) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Restaurant not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Restaurant not found",
+      });
     }
+
+    await Food.updateMany({ restaurants: id }, { $pull: { restaurants: id } });
 
     if (restaurant.images?.length > 0) {
       await Promise.all(
-        restaurant.images.map((img) =>
-          cloudinary.v2.uploader.destroy(img.public_id),
-        ),
+        restaurant.images.map(async (img) => {
+          try {
+            if (img.public_id) {
+              await cloudinary.uploader.destroy(img.public_id);
+            }
+          } catch (err) {
+            console.warn("Cloudinary delete failed:", img.public_id);
+          }
+        }),
       );
     }
 
     await Restaurant.findByIdAndDelete(id);
+
     res.json({
       success: true,
       message: "Restaurant deleted successfully",
-      data: restaurant,
     });
   } catch (error) {
     console.error("Error deleting restaurant:", error);
-    res.status(500).json({ success: false, message: error.message });
+
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+export const getRestaurantStats = async (req, res) => {
+  try {
+    const [total, active, staffCount] = await Promise.all([
+      Restaurant.countDocuments(),
+      Restaurant.countDocuments({ isOpen: true }),
+      User.countDocuments({ role: "admin" }),
+    ]);
+
+    res.json({ total, active, staffCount });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };

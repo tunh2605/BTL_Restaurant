@@ -1,4 +1,5 @@
 import Food from "../models/Food.js";
+import cloudinary from "../configs/cloudinary.js";
 
 const FOOD_POPULATE = [{ path: "category" }, { path: "restaurants" }];
 
@@ -58,7 +59,7 @@ export const updateFood = async (req, res) => {
     const food = await Food.findByIdAndUpdate(
       req.params.id,
       { name, image, description, price, category, restaurants },
-      { new: true, runValidators: true },
+      { returnDocument: "after", runValidators: true },
     ).populate(FOOD_POPULATE);
 
     if (!food) return notFound(res);
@@ -71,10 +72,15 @@ export const updateFood = async (req, res) => {
 
 export const deleteFood = async (req, res) => {
   try {
-    const food = await Food.findByIdAndDelete(req.params.id);
+    const { id } = req.params;
+    const food = await Food.findById(id);
 
     if (!food) return notFound(res);
-
+    if (food.image) {
+      const publicId = food.image.split("/").pop().split(".")[0];
+      await cloudinary.uploader.destroy(publicId);
+    }
+    await Food.findByIdAndDelete(id);
     res.json({ success: true, message: "Món ăn đã được xóa" });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

@@ -14,7 +14,7 @@ const restaurantSchema = new mongoose.Schema(
       ],
       default: [],
     },
-
+    isOpen: { type: Boolean, default: true },
     openTime: { type: String, required: true, default: "09:00" },
     closeTime: { type: String, required: true, default: "21:00" },
   },

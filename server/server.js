@@ -11,6 +11,7 @@ import reservationRouter from "./routes/reservationRoutes.js";
 import { createAuthRouter } from "./routes/authRouter.js";
 import { errorMiddleware } from "./errors/errorMiddleware.js";
 import restaurantRouter from "./routes/restaurantRoutes.js";
+import "./configs/cloudinary.js";
 
 const app = express();
 const port = 3000;
