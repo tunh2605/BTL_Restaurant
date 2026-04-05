@@ -51,80 +51,7 @@ const orderStatusData = [
   { name: "Chờ xác nhận", value: 12, color: "#C8714A" },
 ];
 
-const paymentHistory = [
-  {
-    id: "#ORD-1082",
-    customer: "Nguyễn Văn An",
-    date: "2024-03-28",
-    amount: 485000,
-    method: "online",
-    status: "completed",
-    items: "Cà ri gà, Bánh Naan x2",
-  },
-  {
-    id: "#ORD-1081",
-    customer: "Trần Thị Bích",
-    date: "2024-03-27",
-    amount: 320000,
-    method: "cash",
-    status: "completed",
-    items: "Masala Chai, Samosa x3",
-  },
-  {
-    id: "#ORD-1080",
-    customer: "Lê Minh Khoa",
-    date: "2024-03-27",
-    amount: 760000,
-    method: "online",
-    status: "completed",
-    items: "Biryani, Cà ri bò, Nước ép xoài",
-  },
-  {
-    id: "#ORD-1079",
-    customer: "Phạm Thu Hà",
-    date: "2024-03-26",
-    amount: 215000,
-    method: "cash",
-    status: "cancelled",
-    items: "Bánh Naan, Đồ uống",
-  },
-  {
-    id: "#ORD-1078",
-    customer: "Hoàng Đức Minh",
-    date: "2024-03-25",
-    amount: 930000,
-    method: "online",
-    status: "completed",
-    items: "Thực đơn gia đình x4",
-  },
-  {
-    id: "#ORD-1077",
-    customer: "Vũ Thị Lan",
-    date: "2024-03-24",
-    amount: 410000,
-    method: "cash",
-    status: "completed",
-    items: "Cà ri chay, Bánh mì Naan",
-  },
-  {
-    id: "#ORD-1076",
-    customer: "Đỗ Quang Huy",
-    date: "2024-03-22",
-    amount: 185000,
-    method: "online",
-    status: "completed",
-    items: "Masala Chai x2, Samosa",
-  },
-  {
-    id: "#ORD-1075",
-    customer: "Bùi Thị Mai",
-    date: "2024-03-20",
-    amount: 640000,
-    method: "cash",
-    status: "completed",
-    items: "Cà ri hải sản, Cơm Biryani",
-  },
-];
+
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 const formatVND = (amount) =>
@@ -149,20 +76,6 @@ const revenueChange = (
   ((totalRevenue - prevTotalRevenue) / prevTotalRevenue) *
   100
 ).toFixed(1);
-
-const statsCards = [
-  {
-    label: "Tổng đơn đã đặt",
-    value: "262",
-    prev: "201",
-    change: "+30.3%",
-    up: true,
-    icon: ShoppingBag,
-    color: "#C8714A",
-    bg: "#FFF3EE",
-  },
-  // reserved — these two cards now use real API data
-];
 
 // ─── Custom Tooltip ───────────────────────────────────────────────────────────
 const RevenueTooltip = ({ active, payload, label }) => {
@@ -292,6 +205,9 @@ const Dashboard = () => {
   // ─── Real stats for users + reservations ──────────────────────────────────
   const [dashStats, setDashStats] = useState(null);
 
+  // ─── Real payments ────────────────────────────────────────────────────────
+  const [payments, setPayments] = useState([]);
+
   useEffect(() => {
     const fetchStats = async () => {
       try {
@@ -300,10 +216,21 @@ const Dashboard = () => {
         );
         setDashStats(data);
       } catch {
-        // silently fail – keep showing mock for other cards
+        // silently fail
+      }
+    };
+    const fetchPayments = async () => {
+      try {
+        const { data } = await axios.get(
+          `${import.meta.env.VITE_API_URL}/api/payments`
+        );
+        setPayments(data);
+      } catch {
+        // silently fail
       }
     };
     fetchStats();
+    fetchPayments();
   }, []);
 
   useEffect(() => {
@@ -315,8 +242,17 @@ const Dashboard = () => {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // Filter payments
-  const filteredPayments = paymentHistory
+  // Filter payments — map API shape to table shape on the fly
+  const filteredPayments = payments
+    .map((p) => ({
+      id: p._id,
+      customer: p.user?.name || p.user?.email || "—",
+      date: (p.paidAt || p.createdAt || "").slice(0, 10),
+      amount: p.amount,
+      method: p.method === "vnpay" ? "online" : p.method,
+      status: p.status === "success" ? "completed" : p.status === "failed" ? "cancelled" : p.status,
+      items: p.order?.note || "—",
+    }))
     .filter((p) => {
       if (filterStatus !== "all" && p.status !== filterStatus) return false;
       if (dateRange.start && p.date < dateRange.start) return false;
@@ -360,7 +296,30 @@ const Dashboard = () => {
     { value: "today", label: "Hôm nay" },
   ];
 
-  const totalCurrentRevenue = revenueData.reduce((s, d) => s + d.revenue, 0);
+  const totalCurrentRevenue = dashStats?.revenueThisMonth ?? revenueData.reduce((s, d) => s + d.revenue, 0);
+  const prevCurrentRevenue  = dashStats?.revenueLastMonth  ?? prevMonthRevenueData.reduce((s, d) => s + d.revenue, 0);
+  const currentRevenueChange = prevCurrentRevenue > 0
+    ? (((totalCurrentRevenue - prevCurrentRevenue) / prevCurrentRevenue) * 100).toFixed(1)
+    : totalCurrentRevenue > 0 ? "100.0" : "0.0";
+
+  // Pie data từ real API nếu có
+  const pieData = dashStats?.orderStatusMap
+    ? [
+        { name: "Hoàn thành",   value: dashStats.orderStatusMap.completed  || 0, color: "#22c55e" },
+        { name: "Đang xử lý",   value: dashStats.orderStatusMap.preparing  || 0, color: "#f59e0b" },
+        { name: "Đã xác nhận",  value: dashStats.orderStatusMap.confirmed  || 0, color: "#3b82f6" },
+        { name: "Chờ xác nhận", value: dashStats.orderStatusMap.pending    || 0, color: "#C8714A" },
+        { name: "Đã huỷ",       value: dashStats.orderStatusMap.cancelled  || 0, color: "#ef4444" },
+      ].filter((d) => d.value > 0)
+    : orderStatusData;
+
+  const pieTotal = pieData.reduce((s, d) => s + d.value, 0);
+
+  // Helper tính % change
+  const pctChange = (curr, prev) => {
+    if (prev > 0) return `${curr - prev >= 0 ? "+" : ""}${(((curr - prev) / prev) * 100).toFixed(1)}%`;
+    return curr > 0 ? "+100%" : "0%";
+  };
 
   return (
     <div className="space-y-6 pb-4">
@@ -377,10 +336,9 @@ const Dashboard = () => {
         {[
           {
             label: "Tổng đơn đã đặt",
-            value: "262",
-            prev: "201",
-            change: "+30.3%",
-            up: true,
+            value: dashStats ? String(dashStats.totalOrders) : "—",
+            change: dashStats ? pctChange(dashStats.ordersThisMonth, dashStats.ordersLastMonth) : "—",
+            up: dashStats ? dashStats.ordersThisMonth >= dashStats.ordersLastMonth : true,
             icon: ShoppingBag,
             color: "#C8714A",
             bg: "#FFF3EE",
@@ -388,15 +346,8 @@ const Dashboard = () => {
           {
             label: "Bàn đã đặt",
             value: dashStats ? String(dashStats.totalReservations) : "—",
-            prev: dashStats ? String(dashStats.reservationsLastMonth) : "—",
-            change: dashStats
-              ? dashStats.reservationsLastMonth > 0
-                ? `${dashStats.reservationsThisMonth - dashStats.reservationsLastMonth >= 0 ? "+" : ""}${(((dashStats.reservationsThisMonth - dashStats.reservationsLastMonth) / dashStats.reservationsLastMonth) * 100).toFixed(1)}%`
-                : dashStats.reservationsThisMonth > 0 ? "+100%" : "0%"
-              : "—",
-            up: dashStats
-              ? dashStats.reservationsThisMonth >= dashStats.reservationsLastMonth
-              : true,
+            change: dashStats ? pctChange(dashStats.reservationsThisMonth, dashStats.reservationsLastMonth) : "—",
+            up: dashStats ? dashStats.reservationsThisMonth >= dashStats.reservationsLastMonth : true,
             icon: CalendarCheck,
             color: "#f59e0b",
             bg: "#FFFBEB",
@@ -404,25 +355,17 @@ const Dashboard = () => {
           {
             label: "Tổng người dùng",
             value: dashStats ? String(dashStats.totalUsers) : "—",
-            prev: dashStats ? String(dashStats.newUsersLastMonth) : "—",
-            change: dashStats
-              ? dashStats.newUsersLastMonth > 0
-                ? `${dashStats.newUsersThisMonth - dashStats.newUsersLastMonth >= 0 ? "+" : ""}${(((dashStats.newUsersThisMonth - dashStats.newUsersLastMonth) / dashStats.newUsersLastMonth) * 100).toFixed(1)}%`
-                : dashStats.newUsersThisMonth > 0 ? "+100%" : "0%"
-              : "—",
-            up: dashStats
-              ? dashStats.newUsersThisMonth >= dashStats.newUsersLastMonth
-              : true,
+            change: dashStats ? pctChange(dashStats.newUsersThisMonth, dashStats.newUsersLastMonth) : "—",
+            up: dashStats ? dashStats.newUsersThisMonth >= dashStats.newUsersLastMonth : true,
             icon: Users,
             color: "#3b82f6",
             bg: "#EFF6FF",
           },
           {
             label: "Tổng doanh thu",
-            value: formatVNDShort(totalRevenue),
-            prev: formatVNDShort(prevTotalRevenue),
-            change: `${revenueChange > 0 ? "+" : ""}${revenueChange}%`,
-            up: parseFloat(revenueChange) >= 0,
+            value: dashStats ? formatVNDShort(dashStats.totalRevenue) : "—",
+            change: dashStats ? pctChange(dashStats.revenueThisMonth, dashStats.revenueLastMonth) : "—",
+            up: dashStats ? dashStats.revenueThisMonth >= dashStats.revenueLastMonth : true,
             icon: DollarSign,
             color: "#22c55e",
             bg: "#F0FDF4",
@@ -485,18 +428,19 @@ const Dashboard = () => {
               </p>
               <span
                 className={`flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${
-                  parseFloat(revenueChange) >= 0
+                  parseFloat(currentRevenueChange) >= 0
                     ? "text-green-700 bg-green-50"
                     : "text-red-600 bg-red-50"
                 }`}
               >
-                {parseFloat(revenueChange) >= 0 ? (
+                {parseFloat(currentRevenueChange) >= 0 ? (
                   <TrendingUp className="w-3 h-3" />
                 ) : (
                   <TrendingDown className="w-3 h-3" />
                 )}
-                {revenueChange > 0 ? "+" : ""}
-                {revenueChange}% ({formatVNDShort(totalCurrentRevenue - prevTotalRevenue)})
+                {parseFloat(currentRevenueChange) > 0 ? "+" : ""}
+                {currentRevenueChange}%
+                {prevCurrentRevenue > 0 && ` (${formatVNDShort(totalCurrentRevenue - prevCurrentRevenue)})`}
               </span>
             </div>
           </div>
@@ -571,7 +515,7 @@ const Dashboard = () => {
             <ResponsiveContainer width="100%" height={200}>
               <PieChart>
                 <Pie
-                  data={orderStatusData}
+                  data={pieData}
                   cx="50%"
                   cy="50%"
                   innerRadius={55}
@@ -579,7 +523,7 @@ const Dashboard = () => {
                   paddingAngle={3}
                   dataKey="value"
                 >
-                  {orderStatusData.map((entry, index) => (
+                  {pieData.map((entry, index) => (
                     <Cell key={index} fill={entry.color} />
                   ))}
                 </Pie>
@@ -590,7 +534,7 @@ const Dashboard = () => {
 
           {/* Custom legend */}
           <div className="space-y-2 mt-2">
-            {orderStatusData.map((entry) => (
+            {pieData.map((entry) => (
               <div key={entry.name} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span
@@ -604,7 +548,7 @@ const Dashboard = () => {
                     {entry.value}
                   </span>
                   <span className="text-xs text-[#b09070]">
-                    ({Math.round((entry.value / orderStatusData.reduce((s, d) => s + d.value, 0)) * 100)}%)
+                    ({pieTotal > 0 ? Math.round((entry.value / pieTotal) * 100) : 0}%)
                   </span>
                 </div>
               </div>
@@ -760,7 +704,7 @@ const Dashboard = () => {
                     key={p.id}
                     className="border-b border-[#f9f2ec] hover:bg-[#fdf8f5] transition-colors"
                   >
-                    <td className="py-3.5 pr-4 font-mono font-semibold text-[#C8714A] whitespace-nowrap">
+                    <td className="py-3.5 pr-4 font-mono text-xs font-semibold text-[#C8714A]">
                       {p.id}
                     </td>
                     <td className="py-3.5 pr-4 font-medium text-[#3a2010] whitespace-nowrap">

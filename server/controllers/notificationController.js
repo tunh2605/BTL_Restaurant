@@ -42,3 +42,25 @@ export const markAllAsRead = async (req, res) => {
     res.status(500).json({ message: "Lỗi server.", error: err.message });
   }
 };
+
+// ADMIN: Xóa một notification
+export const deleteNotification = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const noti = await AdminNotification.findByIdAndDelete(id);
+    if (!noti) return res.status(404).json({ message: "Không tìm thấy." });
+    res.json({ message: "Đã xóa thông báo." });
+  } catch (err) {
+    res.status(500).json({ message: "Lỗi server.", error: err.message });
+  }
+};
+
+// ADMIN: Xóa tất cả notification đã đọc
+export const deleteAllRead = async (req, res) => {
+  try {
+    await AdminNotification.deleteMany({ isRead: true });
+    res.json({ message: "Đã xóa tất cả thông báo đã đọc." });
+  } catch (err) {
+    res.status(500).json({ message: "Lỗi server.", error: err.message });
+  }
+};

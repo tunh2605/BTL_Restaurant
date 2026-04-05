@@ -56,4 +56,10 @@ const adminNotificationSchema = new mongoose.Schema({
   },
 });
 
+// Chặn tạo 2 notification cùng type cho cùng 1 document (e.g. 2 new_order cho cùng orderId)
+adminNotificationSchema.index(
+  { type: 1, refId: 1 },
+  { unique: true, sparse: true, partialFilterExpression: { refId: { $ne: null } } }
+);
+
 export default mongoose.model("AdminNotification", adminNotificationSchema);

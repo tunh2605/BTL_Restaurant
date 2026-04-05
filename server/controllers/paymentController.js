@@ -80,6 +80,9 @@ export const verifyReturn = async (req, res) => {
     }
 
     if (verify.isSuccess) {
+      // Guard: nếu đã xử lý rồi (IPN về trước) thì không tạo noti lần nữa
+      const alreadySuccess = payment.status === "success";
+
       // Cập nhật Payment
       payment.status = "success";
       payment.transactionId = transactionId;
@@ -87,18 +90,20 @@ export const verifyReturn = async (req, res) => {
       payment.paidAt = new Date();
       await payment.save();
 
-      // Cập nhật Order
-      await Order.findByIdAndUpdate(payment.order, { isPaid: true, status: "confirmed" });
+      // Cập nhật Order → completed
+      await Order.findByIdAndUpdate(payment.order, { isPaid: true, status: "completed" });
 
-      // Tạo notification
-      await AdminNotification.create({
-        type: "payment_success",
-        title: "Thanh toán thành công",
-        message: `Đơn hàng #${payment.order} đã được thanh toán qua VNPay. Mã GD: ${transactionId}`,
-        restaurant: payment.restaurant,
-        refType: "Payment",
-        refId: payment._id,
-      });
+      // Tạo notification chỉ khi chưa có (tránh duplicate nếu FE gọi 2 lần)
+      if (!alreadySuccess) {
+        await AdminNotification.create({
+          type: "payment_success",
+          title: "Thanh toán thành công",
+          message: `Đơn hàng #${payment.order} đã được thanh toán qua VNPay. Mã GD: ${transactionId}`,
+          restaurant: payment.restaurant,
+          refType: "Payment",
+          refId: payment._id,
+        });
+      }
 
       return res.json({ success: true, message: "Thanh toán thành công.", payment });
     } else {
@@ -145,7 +150,7 @@ export const vnpayIPN = async (req, res) => {
       payment.paidAt = new Date();
       await payment.save();
 
-      await Order.findByIdAndUpdate(payment.order, { isPaid: true, status: "confirmed" });
+      await Order.findByIdAndUpdate(payment.order, { isPaid: true, status: "completed" });
     } else {
       payment.status = "failed";
       payment.gatewayResponse = vnpParams;

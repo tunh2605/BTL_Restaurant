@@ -115,3 +115,18 @@ export const updateOrderStatus = async (req, res) => {
     res.status(500).json({ message: "Lỗi server.", error: err.message });
   }
 };
+
+// ─── ADMIN: Xóa đơn hàng ─────────────────────────────────────────────────────
+export const deleteOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const order = await Order.findByIdAndDelete(id);
+    if (!order) return res.status(404).json({ message: "Không tìm thấy đơn hàng." });
+
+    await OrderItem.deleteMany({ order: id });
+
+    res.json({ message: "Xóa đơn hàng thành công." });
+  } catch (err) {
+    res.status(500).json({ message: "Lỗi server.", error: err.message });
+  }
+};

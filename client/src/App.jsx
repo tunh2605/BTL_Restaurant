@@ -83,6 +83,7 @@ function App() {
             }
           >
             <Route index element={<Dashboard />} />
+            <Route path="dashboard" element={<Dashboard />} />
             <Route path="foods" element={<ListFood />} />
             <Route path="foods/add" element={<AddFood />} />
             <Route path="foods/edit/:id" element={<EditFood />} />
