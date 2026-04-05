@@ -101,7 +101,7 @@ const ReservationModal = ({
           {/* ID + status */}
           <div className="flex items-center justify-between">
             <span className="font-mono text-xs text-[#a08060] bg-[#f5ede3] px-2.5 py-1 rounded-lg">
-              #{res._id.slice(-8).toUpperCase()}
+              {res._id}
             </span>
             <StatusBadge status={res.status} />
           </div>
@@ -524,8 +524,8 @@ const ListReservation = () => {
                   >
                     {/* ID */}
                     <td className="py-3.5 px-4">
-                      <span className="font-mono text-xs text-[#a08060] bg-[#f5ede3] px-2 py-0.5 rounded-lg">
-                        #{r._id.slice(-8).toUpperCase()}
+                      <span className="font-mono text-xs text-[#a08060] bg-[#f5ede3] px-2 py-0.5 rounded-lg break-all">
+                        {r._id}
                       </span>
                     </td>
                     {/* Customer */}

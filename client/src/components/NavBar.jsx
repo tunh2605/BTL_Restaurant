@@ -9,10 +9,12 @@ import {
 } from "lucide-react";
 import { assets } from "../assets/assets";
 import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/CartContext";
 
 const NavBar = () => {
   const [open, setOpen] = useState(false);
   const { user, logout } = useAuth();
+  const { totalItems } = useCart();
 
   const navLinks = [
     { label: "Trang chủ", to: "/" },
@@ -72,8 +74,13 @@ const NavBar = () => {
       </div>
 
       <div className="flex gap-6 items-center">
-        <Link to="/cart">
+        <Link to="/cart" className="relative">
           <ShoppingCartIcon className="h-6 w-6 cursor-pointer text-gray-600 hover:text-primary-dull transition" />
+          {totalItems > 0 && (
+            <span className="absolute -top-2 -right-2 w-5 h-5 bg-primary-dull text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+              {totalItems > 99 ? "99+" : totalItems}
+            </span>
+          )}
         </Link>
         {!user ? (
           <Link to="/login">

@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import Reservation from "../models/Reservation.js";
 import Order from "../models/Order.js";
+import Payment from "../models/Payment.js";
 
 // ─── ADMIN: Lấy tất cả người dùng ────────────────────────────────────────────
 export const getAllUsers = async (req, res) => {
@@ -97,7 +98,7 @@ export const getUserStats = async (req, res) => {
   }
 };
 
-// ─── ADMIN: Thống kê dashboard (users + reservations) ────────────────────────
+// ─── ADMIN: Thống kê dashboard (users + reservations + orders + revenue) ──────
 export const getDashboardStats = async (req, res) => {
   try {
     const totalUsers = await User.countDocuments();
@@ -105,23 +106,54 @@ export const getDashboardStats = async (req, res) => {
     const pendingReservations = await Reservation.countDocuments({ status: "pending" });
     const confirmedReservations = await Reservation.countDocuments({ status: "confirmed" });
 
-    // Users mới tháng này
+    // Orders
+    const totalOrders = await Order.countDocuments();
+    const ordersByStatus = await Order.aggregate([
+      { $group: { _id: "$status", count: { $sum: 1 } } },
+    ]);
+    // map thành { pending: n, confirmed: n, ... }
+    const orderStatusMap = {};
+    for (const s of ordersByStatus) orderStatusMap[s._id] = s.count;
+
+    // Revenue từ Payment.status = "success"
+    const revenueResult = await Payment.aggregate([
+      { $match: { status: "success" } },
+      { $group: { _id: null, total: { $sum: "$amount" } } },
+    ]);
+    const totalRevenue = revenueResult[0]?.total || 0;
+
+    // Revenue tháng này
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
 
-    const newUsersThisMonth = await User.countDocuments({
-      createdAt: { $gte: startOfMonth },
+    const revenueThisMonthResult = await Payment.aggregate([
+      { $match: { status: "success", paidAt: { $gte: startOfMonth } } },
+      { $group: { _id: null, total: { $sum: "$amount" } } },
+    ]);
+    const revenueThisMonth = revenueThisMonthResult[0]?.total || 0;
+
+    const revenueLastMonthResult = await Payment.aggregate([
+      { $match: { status: "success", paidAt: { $gte: startOfLastMonth, $lte: endOfLastMonth } } },
+      { $group: { _id: null, total: { $sum: "$amount" } } },
+    ]);
+    const revenueLastMonth = revenueLastMonthResult[0]?.total || 0;
+
+    // Orders tháng này vs tháng trước
+    const ordersThisMonth = await Order.countDocuments({ createdAt: { $gte: startOfMonth } });
+    const ordersLastMonth = await Order.countDocuments({
+      createdAt: { $gte: startOfLastMonth, $lte: endOfLastMonth },
     });
+
+    // Users mới tháng này và tháng trước
+    const newUsersThisMonth = await User.countDocuments({ createdAt: { $gte: startOfMonth } });
     const newUsersLastMonth = await User.countDocuments({
       createdAt: { $gte: startOfLastMonth, $lte: endOfLastMonth },
     });
 
     // Reservations tháng này và tháng trước
-    const reservationsThisMonth = await Reservation.countDocuments({
-      createdAt: { $gte: startOfMonth },
-    });
+    const reservationsThisMonth = await Reservation.countDocuments({ createdAt: { $gte: startOfMonth } });
     const reservationsLastMonth = await Reservation.countDocuments({
       createdAt: { $gte: startOfLastMonth, $lte: endOfLastMonth },
     });
@@ -135,6 +167,13 @@ export const getDashboardStats = async (req, res) => {
       reservationsLastMonth,
       pendingReservations,
       confirmedReservations,
+      totalOrders,
+      ordersThisMonth,
+      ordersLastMonth,
+      orderStatusMap,
+      totalRevenue,
+      revenueThisMonth,
+      revenueLastMonth,
     });
   } catch (err) {
     res.status(500).json({ message: "Lỗi server.", error: err.message });

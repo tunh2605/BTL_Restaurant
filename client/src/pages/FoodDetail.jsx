@@ -12,79 +12,46 @@ import { useState } from "react";
 import ReviewSection from "../components/ReviewSection";
 import RestaurantDropdown from "../components/RestaurantDropdown";
 import { useFood } from "../context/FoodContext";
-import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/CartContext";
 import toast from "react-hot-toast";
-import axios from "axios";
 
 const FoodDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { foods, restaurants, loading } = useFood();
-  const { user } = useAuth();
+  const { foods, restaurants } = useFood();
+  const { addToCart } = useCart();
+  const food = foods.find((f) => f._id === id);
+
   const [quantity, setQuantity] = useState(1);
   const [note, setNote] = useState("");
   const [branch, setBranch] = useState("");
 
-  const food = foods.find((f) => f._id === id);
-  if (loading)
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-primary-dull" />
-      </div>
-    );
-
-  if (!food)
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-gray-400">Không tìm thấy món ăn</p>
-      </div>
-    );
-
-  const handleAddToCart = async (e) => {
-    e.preventDefault();
-
-    if (!user) {
-      toast.error("Vui lòng đăng nhập để thêm vào giỏ hàng");
-      navigate("/login");
-      return;
-    }
-
+  const handleAddToCart = () => {
     if (!branch) {
-      toast.error("Vui lòng chọn chi nhánh");
+      toast.error("Vui lòng chọn chi nhánh trước khi thêm vào giỏ.");
       return;
     }
+    const selectedRestaurant = restaurants.find((r) => r._id === branch);
+    addToCart({
+      foodId: food._id,
+      name: food.name,
+      price: food.price,
+      image: food.image,
+      quantity: Number(quantity),
+      note,
+      restaurantId: branch,
+      restaurantName: selectedRestaurant?.name || "",
+    });
+    toast.success(`Đã thêm ${food.name} vào giỏ hàng!`);
+  };
 
-    try {
-      const { data } = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/cart/add`,
-        {
-          foodId: food._id,
-          restaurantId: branch,
-          quantity: Number(quantity),
-        },
-      );
-
-      // Nếu khác nhà hàng → hỏi người dùng
-      if (data.code === "DIFFERENT_RESTAURANT") {
-        const confirm = window.confirm(
-          "Giỏ hàng đang có món từ nhà hàng khác. Bạn có muốn xóa và đặt lại không?",
-        );
-        if (confirm) {
-          await axios.delete(`${import.meta.env.VITE_API_URL}/api/cart/clear`);
-          await axios.post(`${import.meta.env.VITE_API_URL}/api/cart/add`, {
-            foodId: food._id,
-            restaurantId: branch,
-            quantity: Number(quantity),
-          });
-          toast.success("Đã thêm vào giỏ hàng");
-        }
-        return;
-      }
-
-      toast.success("Đã thêm vào giỏ hàng");
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Thêm vào giỏ thất bại");
+  const handleBuyNow = () => {
+    if (!branch) {
+      toast.error("Vui lòng chọn chi nhánh trước khi mua.");
+      return;
     }
+    handleAddToCart();
+    navigate("/cart");
   };
 
   return (
@@ -210,8 +177,8 @@ const FoodDetail = () => {
             </button>
 
             <button
-              type="button"
               className="flex items-center gap-3 px-6 py-3 bg-[#EFE0CD] rounded-full hover:bg-[#e9e0d5] transition"
+              onClick={handleBuyNow}
             >
               <BadgeDollarSignIcon className="w-5 h-5" />
               Mua ngay

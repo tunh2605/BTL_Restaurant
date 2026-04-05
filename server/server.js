@@ -11,6 +11,9 @@ import reservationRouter from "./routes/reservationRoutes.js";
 import { createAuthRouter } from "./routes/authRouter.js";
 import { errorMiddleware } from "./errors/errorMiddleware.js";
 import restaurantRouter from "./routes/restaurantRoutes.js";
+import orderRouter from "./routes/orderRoutes.js";
+import paymentRouter from "./routes/paymentRoutes.js";
+import notificationRouter from "./routes/notificationRoutes.js";
 import "./configs/cloudinary.js";
 import cartRouter from "./routes/cartRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
@@ -60,6 +63,23 @@ app.use("/api/admin", adminRouter);
 app.use("/api/categories", categoryRouter);
 app.use("/api/reservations", reservationRouter);
 app.use("/api/auth", createAuthRouter(env));
+app.use("/api/orders", orderRouter);
+app.use("/api/payments", paymentRouter);
+app.use("/api/notifications", notificationRouter);
+
+// VNPay ReturnUrl proxy — redirect params sang FE
+app.get("/payment/return", (req, res) => {
+  const feBase = process.env.FE_BASE_URL || "http://localhost:5173";
+  const qs = new URLSearchParams(req.query).toString();
+  res.redirect(`${feBase}/payment/return?${qs}`);
+});
+
+// VNPay registered ReturnUrl alias (http://localhost:3000/api/check-payment-vnpay)
+app.get("/api/check-payment-vnpay", (req, res) => {
+  const feBase = "http://localhost:5173";
+  const qs = new URLSearchParams(req.query).toString();
+  res.redirect(`${feBase}/payment/return?${qs}`);
+});
 
 app.use(errorMiddleware);
 app.use("/api/restaurants", restaurantRouter);

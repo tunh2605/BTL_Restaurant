@@ -1,5 +1,6 @@
 import Reservation from "../models/Reservation.js";
 import User from "../models/User.js";
+import AdminNotification from "../models/AdminNotification.js";
 
 // ─── USER: Tạo đặt bàn mới ────────────────────────────────────────────────────
 export const createReservation = async (req, res) => {
@@ -19,6 +20,15 @@ export const createReservation = async (req, res) => {
       numberOfPeople,
       note: note || "",
       status: "pending",
+    });
+
+    // Tạo notification cho admin
+    await AdminNotification.create({
+      type: "new_reservation",
+      title: "Đặt bàn mới",
+      message: `${name} vừa đặt bàn cho ${numberOfPeople} người vào ${date} lúc ${time}`,
+      refType: "Reservation",
+      refId: reservation._id,
     });
 
     res.status(201).json({ message: "Đặt bàn thành công.", reservation });
