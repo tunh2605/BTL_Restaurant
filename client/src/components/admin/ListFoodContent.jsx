@@ -87,7 +87,7 @@ const ListFoodContent = ({ isHQAdmin = true }) => {
         `${import.meta.env.VITE_API_URL}/api/categories/delete/${modal.data._id}`,
       );
       toast.success(data.message);
-      await refreshCategories();
+      await Promise.all([refreshCategories(), fetchFoods()]);
       closeModal();
     } catch (err) {
       toast.error(err.response?.data?.message || "Xóa thất bại");
@@ -150,11 +150,7 @@ const ListFoodContent = ({ isHQAdmin = true }) => {
                     isHQAdmin={isHQAdmin}
                     index={i}
                     onDelete={(cat) => {
-                      if (cat.foodCount > 0)
-                        return toast.error(
-                          "Không thể xóa danh mục tồn tại món ăn",
-                        );
-                      else openModal("deleteCategory", cat);
+                      openModal("deleteCategory", cat);
                     }}
                     onEdit={(cat) => openModal("update", cat)}
                   />
