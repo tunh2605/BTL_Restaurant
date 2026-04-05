@@ -11,16 +11,47 @@ import { useState } from "react";
 import ReviewSection from "../components/ReviewSection";
 import RestaurantDropdown from "../components/RestaurantDropdown";
 import { useFood } from "../context/FoodContext";
+import { useCart } from "../context/CartContext";
+import toast from "react-hot-toast";
 
 const FoodDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { foods, restaurants } = useFood();
+  const { addToCart } = useCart();
   const food = foods.find((f) => f._id === id);
 
   const [quantity, setQuantity] = useState(1);
   const [note, setNote] = useState("");
   const [branch, setBranch] = useState("");
+
+  const handleAddToCart = () => {
+    if (!branch) {
+      toast.error("Vui lòng chọn chi nhánh trước khi thêm vào giỏ.");
+      return;
+    }
+    const selectedRestaurant = restaurants.find((r) => r._id === branch);
+    addToCart({
+      foodId: food._id,
+      name: food.name,
+      price: food.price,
+      image: food.image,
+      quantity: Number(quantity),
+      note,
+      restaurantId: branch,
+      restaurantName: selectedRestaurant?.name || "",
+    });
+    toast.success(`Đã thêm ${food.name} vào giỏ hàng!`);
+  };
+
+  const handleBuyNow = () => {
+    if (!branch) {
+      toast.error("Vui lòng chọn chi nhánh trước khi mua.");
+      return;
+    }
+    handleAddToCart();
+    navigate("/cart");
+  };
 
   return (
     <div className="px-6 md:px-16 lg:px-40 pt-30 md:pt-30">
@@ -135,15 +166,16 @@ const FoodDetail = () => {
           <div className="flex gap-4 flex-wrap pt-4">
             <button
               className="flex items-center gap-3 px-6 py-3 bg-primary-dull text-white rounded-full hover:opacity-90 transition"
-              onClick={() => {
-                console.log({ food, quantity, note, branch });
-              }}
+              onClick={handleAddToCart}
             >
               <ShoppingCart className="w-5 h-5" />
               Thêm vào giỏ
             </button>
 
-            <button className="flex items-center gap-3 px-6 py-3 bg-[#EFE0CD] rounded-full hover:bg-[#e9e0d5] transition">
+            <button
+              className="flex items-center gap-3 px-6 py-3 bg-[#EFE0CD] rounded-full hover:bg-[#e9e0d5] transition"
+              onClick={handleBuyNow}
+            >
               <BadgeDollarSignIcon className="w-5 h-5" />
               Mua ngay
             </button>

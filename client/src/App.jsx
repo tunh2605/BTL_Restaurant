@@ -18,6 +18,8 @@ const Register = lazy(() => import("./pages/Register"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Profile = lazy(() => import("./pages/Profile"));
+const PaymentReturn = lazy(() => import("./pages/PaymentReturn"));
+const TestPayment = lazy(() => import("./pages/TestPayment"));
 
 const Layout = lazy(() => import("./pages/layouts/Layout"));
 const Dashboard = lazy(() => import("./pages/admin/Dashboard"));
@@ -69,6 +71,8 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/payment/return" element={<PaymentReturn />} />
+          <Route path="/test" element={<TestPayment />} />
 
           <Route
             path="/admin/*"
