@@ -1,6 +1,7 @@
 import {
   ArrowLeft,
   BadgeDollarSignIcon,
+  Loader2,
   Minus,
   Plus,
   ShoppingCart,
@@ -11,16 +12,80 @@ import { useState } from "react";
 import ReviewSection from "../components/ReviewSection";
 import RestaurantDropdown from "../components/RestaurantDropdown";
 import { useFood } from "../context/FoodContext";
+import { useAuth } from "../context/AuthContext";
+import toast from "react-hot-toast";
+import axios from "axios";
 
 const FoodDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { foods, restaurants } = useFood();
-  const food = foods.find((f) => f._id === id);
-
+  const { foods, restaurants, loading } = useFood();
+  const { user } = useAuth();
   const [quantity, setQuantity] = useState(1);
   const [note, setNote] = useState("");
   const [branch, setBranch] = useState("");
+
+  const food = foods.find((f) => f._id === id);
+  if (loading)
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin text-primary-dull" />
+      </div>
+    );
+
+  if (!food)
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-gray-400">Không tìm thấy món ăn</p>
+      </div>
+    );
+
+  const handleAddToCart = async (e) => {
+    e.preventDefault();
+
+    if (!user) {
+      toast.error("Vui lòng đăng nhập để thêm vào giỏ hàng");
+      navigate("/login");
+      return;
+    }
+
+    if (!branch) {
+      toast.error("Vui lòng chọn chi nhánh");
+      return;
+    }
+
+    try {
+      const { data } = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/cart/add`,
+        {
+          foodId: food._id,
+          restaurantId: branch,
+          quantity: Number(quantity),
+        },
+      );
+
+      // Nếu khác nhà hàng → hỏi người dùng
+      if (data.code === "DIFFERENT_RESTAURANT") {
+        const confirm = window.confirm(
+          "Giỏ hàng đang có món từ nhà hàng khác. Bạn có muốn xóa và đặt lại không?",
+        );
+        if (confirm) {
+          await axios.delete(`${import.meta.env.VITE_API_URL}/api/cart/clear`);
+          await axios.post(`${import.meta.env.VITE_API_URL}/api/cart/add`, {
+            foodId: food._id,
+            restaurantId: branch,
+            quantity: Number(quantity),
+          });
+          toast.success("Đã thêm vào giỏ hàng");
+        }
+        return;
+      }
+
+      toast.success("Đã thêm vào giỏ hàng");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Thêm vào giỏ thất bại");
+    }
+  };
 
   return (
     <div className="px-6 md:px-16 lg:px-40 pt-30 md:pt-30">
@@ -32,7 +97,7 @@ const FoodDetail = () => {
         <Breadcrumb />
       </div>
 
-      <div className="flex flex-col md:flex-row gap-12">
+      <form className="flex flex-col md:flex-row gap-12">
         <div className="flex-1 flex justify-center">
           <div className="aspect-4/5 w-full max-w-md rounded-3xl shadow-xl relative">
             <img
@@ -70,6 +135,7 @@ const FoodDetail = () => {
                 </label>
                 <div className="flex items-center justify-between bg-[#E3E2E0] rounded-full gap-0.5">
                   <button
+                    type="button"
                     className={`p-4 rounded-full ${
                       quantity === 1
                         ? "opacity-30 cursor-not-allowed"
@@ -109,6 +175,7 @@ const FoodDetail = () => {
                   />
 
                   <button
+                    type="button"
                     className="p-4 bg-primary-dull text-white rounded-full"
                     onClick={() => setQuantity((prev) => Number(prev) + 1)}
                   >
@@ -134,22 +201,24 @@ const FoodDetail = () => {
 
           <div className="flex gap-4 flex-wrap pt-4">
             <button
+              type="button"
               className="flex items-center gap-3 px-6 py-3 bg-primary-dull text-white rounded-full hover:opacity-90 transition"
-              onClick={() => {
-                console.log({ food, quantity, note, branch });
-              }}
+              onClick={handleAddToCart}
             >
               <ShoppingCart className="w-5 h-5" />
               Thêm vào giỏ
             </button>
 
-            <button className="flex items-center gap-3 px-6 py-3 bg-[#EFE0CD] rounded-full hover:bg-[#e9e0d5] transition">
+            <button
+              type="button"
+              className="flex items-center gap-3 px-6 py-3 bg-[#EFE0CD] rounded-full hover:bg-[#e9e0d5] transition"
+            >
               <BadgeDollarSignIcon className="w-5 h-5" />
               Mua ngay
             </button>
           </div>
         </div>
-      </div>
+      </form>
       <ReviewSection />
     </div>
   );

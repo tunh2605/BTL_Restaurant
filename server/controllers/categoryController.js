@@ -91,12 +91,24 @@ export const deleteCategory = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const category = await Category.findByIdAndDelete(id);
+    const category = await Category.findById(id);
     if (!category) return notFound(res);
 
-    Food.deleteMany({ category: id }).catch(console.error);
+    const foodCount = await Food.countDocuments({ category: id });
 
-    res.json({ success: true, message: "Danh mục đã được xóa thành công" });
+    if (foodCount > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Không thể xóa danh mục có món ăn",
+      });
+    }
+
+    await Category.findByIdAndDelete(id);
+
+    res.json({
+      success: true,
+      message: "Danh mục đã được xóa thành công",
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

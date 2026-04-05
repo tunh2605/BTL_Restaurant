@@ -12,6 +12,8 @@ import { createAuthRouter } from "./routes/authRouter.js";
 import { errorMiddleware } from "./errors/errorMiddleware.js";
 import restaurantRouter from "./routes/restaurantRoutes.js";
 import "./configs/cloudinary.js";
+import cartRouter from "./routes/cartRoutes.js";
+import orderRoutes from "./routes/orderRoutes.js";
 
 const app = express();
 const port = 3000;
@@ -61,6 +63,8 @@ app.use("/api/auth", createAuthRouter(env));
 
 app.use(errorMiddleware);
 app.use("/api/restaurants", restaurantRouter);
+app.use("/api/cart", cartRouter);
+app.use("/api/orders", orderRoutes);
 
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);

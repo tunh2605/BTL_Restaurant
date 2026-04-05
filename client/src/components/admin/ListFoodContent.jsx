@@ -149,7 +149,13 @@ const ListFoodContent = ({ isHQAdmin = true }) => {
                     foodCount={cat.foodCount}
                     isHQAdmin={isHQAdmin}
                     index={i}
-                    onDelete={(cat) => openModal("deleteCategory", cat)}
+                    onDelete={(cat) => {
+                      if (cat.foodCount > 0)
+                        return toast.error(
+                          "Không thể xóa danh mục tồn tại món ăn",
+                        );
+                      else openModal("deleteCategory", cat);
+                    }}
                     onEdit={(cat) => openModal("update", cat)}
                   />
                 </div>
