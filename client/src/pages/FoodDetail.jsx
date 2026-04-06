@@ -14,9 +14,11 @@ import RestaurantDropdown from "../components/RestaurantDropdown";
 import { useFood } from "../context/FoodContext";
 import { useCart } from "../context/CartContext";
 import toast from "react-hot-toast";
+import { useAuth } from "../context/AuthContext";
 
 const FoodDetail = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { id } = useParams();
   const { foods, restaurants, loading } = useFood();
   const { addToCart } = useCart();
@@ -43,6 +45,10 @@ const FoodDetail = () => {
     );
 
   const handleAddToCart = () => {
+    if (!user) {
+      toast.error("Vui lòng đăng nhập để thêm món vào giỏ.");
+      return;
+    }
     if (!branch) {
       toast.error("Vui lòng chọn chi nhánh trước khi thêm vào giỏ.");
       return;

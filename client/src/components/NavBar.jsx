@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { NavLink, Link } from "react-router-dom";
 import {
   LogOut,
@@ -15,6 +15,8 @@ const NavBar = () => {
   const [open, setOpen] = useState(false);
   const { user, logout } = useAuth();
   const { totalItems } = useCart();
+
+  useEffect(() => {}, [user]);
 
   const navLinks = [
     { label: "Trang chủ", to: "/" },
