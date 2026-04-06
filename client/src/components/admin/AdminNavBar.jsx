@@ -4,7 +4,6 @@ import {
   Bell,
   Settings,
   LogOut,
-  User,
   ShoppingBag,
   CalendarCheck,
   CheckCircle,
@@ -82,7 +81,13 @@ const AdminNavBar = () => {
       setLoadingNotif(true);
       const res = await axios.get(`${API}/api/notifications`);
       const data = res.data;
-      setNotifications(Array.isArray(data) ? data : Array.isArray(data?.notifications) ? data.notifications : []);
+      setNotifications(
+        Array.isArray(data)
+          ? data
+          : Array.isArray(data?.notifications)
+            ? data.notifications
+            : [],
+      );
     } catch {
       // silent — badge stays at 0
     } finally {
@@ -106,8 +111,10 @@ const AdminNavBar = () => {
       await axios.put(`${API}/api/notifications/${notif._id}/read`);
       setNotifications((prev) =>
         prev.map((n) =>
-          n._id === notif._id ? { ...n, isRead: true, readAt: new Date().toISOString() } : n
-        )
+          n._id === notif._id
+            ? { ...n, isRead: true, readAt: new Date().toISOString() }
+            : n,
+        ),
       );
     } catch {
       // silent
@@ -119,7 +126,11 @@ const AdminNavBar = () => {
     try {
       await axios.put(`${API}/api/notifications/read-all`);
       setNotifications((prev) =>
-        prev.map((n) => ({ ...n, isRead: true, readAt: new Date().toISOString() }))
+        prev.map((n) => ({
+          ...n,
+          isRead: true,
+          readAt: new Date().toISOString(),
+        })),
       );
     } catch {
       // silent
@@ -197,7 +208,7 @@ const AdminNavBar = () => {
         >
           <Bell className="w-5 h-5 text-[#7a6050]" />
           {unreadCount > 0 && (
-            <span className="absolute top-1 right-1 min-w-[16px] h-4 px-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white leading-none">
+            <span className="absolute top-1 right-1 min-w-4 h-4 px-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white leading-none">
               {unreadCount > 99 ? "99+" : unreadCount}
             </span>
           )}
@@ -205,7 +216,10 @@ const AdminNavBar = () => {
 
         {/* Notif dropdown */}
         {notifOpen && (
-          <div className="absolute right-0 top-[calc(100%+8px)] w-96 max-w-[calc(100vw-1.5rem)] bg-white rounded-2xl border border-[#ede0d4] shadow-lg z-50 flex flex-col" style={{maxHeight: "480px"}}>
+          <div
+            className="absolute right-0 top-[calc(100%+8px)] w-96 max-w-[calc(100vw-1.5rem)] bg-white rounded-2xl border border-[#ede0d4] shadow-lg z-50 flex flex-col"
+            style={{ maxHeight: "480px" }}
+          >
             {/* header */}
             <div className="px-4 py-3 border-b border-[#f0e4d8] flex items-center justify-between shrink-0">
               <p className="text-sm font-semibold text-[#5a3020]">
@@ -231,14 +245,17 @@ const AdminNavBar = () => {
             {/* list */}
             <div className="overflow-y-auto flex-1">
               {loadingNotif && notifications.length === 0 ? (
-                <div className="py-8 text-center text-sm text-[#b09070]">Đang tải...</div>
+                <div className="py-8 text-center text-sm text-[#b09070]">
+                  Đang tải...
+                </div>
               ) : notifications.length === 0 ? (
                 <div className="py-8 text-center text-sm text-[#b09070]">
                   Không có thông báo
                 </div>
               ) : (
                 notifications.map((n) => {
-                  const { Icon, color, bg } = TYPE_META[n.type] ?? defaultMeta();
+                  const { Icon, color, bg } =
+                    TYPE_META[n.type] ?? defaultMeta();
                   return (
                     <div
                       key={n._id}
@@ -247,19 +264,27 @@ const AdminNavBar = () => {
                         ${n.isRead ? "bg-white hover:bg-[#fdf8f5]" : "bg-[#fff9f5] hover:bg-[#fdf3ec]"}`}
                     >
                       {/* icon */}
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${bg}`}>
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${bg}`}
+                      >
                         <Icon className={`w-4 h-4 ${color}`} />
                       </div>
 
                       {/* text */}
                       <div className="flex-1 min-w-0">
-                        <p className={`text-sm leading-snug break-words ${n.isRead ? "text-[#7a6050]" : "text-[#5a3020] font-medium"}`}>
+                        <p
+                          className={`text-sm leading-snug wrap-break-word ${n.isRead ? "text-[#7a6050]" : "text-[#5a3020] font-medium"}`}
+                        >
                           {n.title || n.message}
                         </p>
                         {n.title && n.message && (
-                          <p className="text-xs text-[#b09070] mt-0.5 break-words leading-relaxed">{n.message}</p>
+                          <p className="text-xs text-[#b09070] mt-0.5 wrap-break-word leading-relaxed">
+                            {n.message}
+                          </p>
                         )}
-                        <p className="text-xs text-[#c0a080] mt-1">{timeAgo(n.createdAt)}</p>
+                        <p className="text-xs text-[#c0a080] mt-1">
+                          {timeAgo(n.createdAt)}
+                        </p>
                       </div>
 
                       {/* right: unread dot + delete */}
@@ -314,7 +339,9 @@ const AdminNavBar = () => {
           className="flex items-center gap-3 hover:bg-[#F5F0EB] rounded-full pl-2 pr-1 py-1 transition-colors"
         >
           <div className="text-right hidden sm:block">
-            <p className="text-sm font-semibold text-[#5a3020] leading-tight">{user?.name}</p>
+            <p className="text-sm font-semibold text-[#5a3020] leading-tight">
+              {user?.name}
+            </p>
             {user?.role === "admin" ? (
               <p className="text-[11px] text-[#b09070]">Admin</p>
             ) : (
@@ -341,20 +368,12 @@ const AdminNavBar = () => {
         {dropdownOpen && (
           <div className="absolute right-0 top-[calc(100%+8px)] w-48 bg-white rounded-2xl border border-[#ede0d4] shadow-sm overflow-hidden z-50">
             <div className="px-4 py-3 border-b border-[#f0e4d8]">
-              <p className="text-sm font-medium text-[#5a3020] truncate">{user?.name}</p>
+              <p className="text-sm font-medium text-[#5a3020] truncate">
+                {user?.name}
+              </p>
               <p className="text-xs text-[#b09070] truncate">{user?.email}</p>
             </div>
             <div className="py-1">
-              <button
-                onClick={() => {
-                  navigate("/admin/profile");
-                  setDropdownOpen(false);
-                }}
-                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[#7a6050] hover:bg-[#fdf8f5] transition-colors"
-              >
-                <User className="w-4 h-4 text-[#b09070]" />
-                Trang cá nhân
-              </button>
               <button
                 onClick={handleLogout}
                 className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"

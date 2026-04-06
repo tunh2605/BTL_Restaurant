@@ -26,17 +26,17 @@ const FoodCard = ({ food }) => {
           {food.description}
         </p>
       </div>
-
-      <div className="flex justify-between gap-2 p-3 bottom-0">
+      <div className="flex flex-col md:flex-row gap-2 p-3">
         <button
-          className="flex items-center gap-1.5 px-6 py-2.5 rounded-full  bg-[#D2C4B2]  font-medium hover:bg-[#e0d7ca] transition cursor-pointer text-sm"
+          className="flex items-center justify-center gap-1.5 w-full md:w-auto px-6 py-2.5 rounded-full bg-[#D2C4B2] font-medium hover:bg-[#e0d7ca] transition text-sm"
           onClick={() => navigate(`/menu/${categorySlug}/${food._id}`)}
         >
           <ShoppingCart className="w-4 h-4" />
           Thêm
         </button>
+
         <button
-          className="flex items-center gap-1.5 px-6 py-2.5 rounded-full border-2 border-[#D2C4B2]  font-medium hover:bg-[#D2C4B2] transition cursor-pointer text-sm"
+          className="flex items-center justify-center gap-1.5 w-full md:w-auto px-6 py-2.5 rounded-full border-2 border-[#D2C4B2] font-medium hover:bg-[#D2C4B2] transition text-sm"
           onClick={() => navigate(`/menu/${categorySlug}/${food._id}`)}
         >
           <CircleAlert className="w-4 h-4" />

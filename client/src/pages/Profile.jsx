@@ -20,24 +20,60 @@ import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { assets } from "../assets/assets";
 import axios from "axios";
-
-
+import { uploadToCloudinary } from "../libs/uploadToCloudinary";
+import toast from "react-hot-toast";
 
 // ─── Status config for orders ─────────────────────────────────────────────────
 const ORDER_STATUS = {
-  pending:    { label: "Chờ xác nhận", color: "bg-amber-50 text-amber-600",   icon: Clock },
-  confirmed:  { label: "Đã xác nhận",  color: "bg-blue-50 text-blue-600",     icon: CheckCircle2 },
-  preparing:  { label: "Đang làm",     color: "bg-purple-50 text-purple-600", icon: Clock },
-  completed:  { label: "Hoàn thành",   color: "bg-green-50 text-green-700",   icon: CheckCircle2 },
-  cancelled:  { label: "Đã huỷ",       color: "bg-red-50 text-red-500",       icon: XCircle },
+  pending: {
+    label: "Chờ xác nhận",
+    color: "bg-amber-50 text-amber-600",
+    icon: Clock,
+  },
+  confirmed: {
+    label: "Đã xác nhận",
+    color: "bg-blue-50 text-blue-600",
+    icon: CheckCircle2,
+  },
+  preparing: {
+    label: "Đang làm",
+    color: "bg-purple-50 text-purple-600",
+    icon: Clock,
+  },
+  completed: {
+    label: "Hoàn thành",
+    color: "bg-green-50 text-green-700",
+    icon: CheckCircle2,
+  },
+  cancelled: {
+    label: "Đã huỷ",
+    color: "bg-red-50 text-red-500",
+    icon: XCircle,
+  },
 };
 
 // ─── Status config for reservations ──────────────────────────────────────────
 const RESERVATION_STATUS = {
-  pending:   { label: "Chờ xác nhận", color: "bg-amber-50 text-amber-600", icon: Clock },
-  confirmed: { label: "Đã xác nhận",  color: "bg-blue-50 text-blue-600",   icon: CheckCircle2 },
-  completed: { label: "Hoàn thành",   color: "bg-green-50 text-green-700", icon: CheckCircle2 },
-  cancelled: { label: "Đã huỷ",       color: "bg-red-50 text-red-500",     icon: XCircle },
+  pending: {
+    label: "Chờ xác nhận",
+    color: "bg-amber-50 text-amber-600",
+    icon: Clock,
+  },
+  confirmed: {
+    label: "Đã xác nhận",
+    color: "bg-blue-50 text-blue-600",
+    icon: CheckCircle2,
+  },
+  completed: {
+    label: "Hoàn thành",
+    color: "bg-green-50 text-green-700",
+    icon: CheckCircle2,
+  },
+  cancelled: {
+    label: "Đã huỷ",
+    color: "bg-red-50 text-red-500",
+    icon: XCircle,
+  },
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -52,7 +88,9 @@ const OrderStatusBadge = ({ status }) => {
   const cfg = ORDER_STATUS[status] || ORDER_STATUS.pending;
   const Icon = cfg.icon;
   return (
-    <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full ${cfg.color}`}>
+    <span
+      className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full ${cfg.color}`}
+    >
       <Icon className="w-3.5 h-3.5" />
       {cfg.label}
     </span>
@@ -63,7 +101,9 @@ const ReservationStatusBadge = ({ status }) => {
   const cfg = RESERVATION_STATUS[status] || RESERVATION_STATUS.pending;
   const Icon = cfg.icon;
   return (
-    <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full ${cfg.color}`}>
+    <span
+      className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full ${cfg.color}`}
+    >
       <Icon className="w-3.5 h-3.5" />
       {cfg.label}
     </span>
@@ -72,14 +112,14 @@ const ReservationStatusBadge = ({ status }) => {
 
 // ─── Tabs ─────────────────────────────────────────────────────────────────────
 const TABS = [
-  { key: "info",         label: "Thông tin", icon: User },
-  { key: "orders",       label: "Đơn hàng",  icon: ShoppingBag },
-  { key: "reservations", label: "Đặt bàn",   icon: CalendarDays },
+  { key: "info", label: "Thông tin", icon: User },
+  { key: "orders", label: "Đơn hàng", icon: ShoppingBag },
+  { key: "reservations", label: "Đặt bàn", icon: CalendarDays },
 ];
 
 // ─── Main component ───────────────────────────────────────────────────────────
 const Profile = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, update } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("info");
 
@@ -93,7 +133,7 @@ const Profile = () => {
     setOrdersLoading(true);
     try {
       const { data } = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/orders/my`
+        `${import.meta.env.VITE_API_URL}/api/orders/my`,
       );
       setOrders(data);
     } catch {
@@ -113,13 +153,19 @@ const Profile = () => {
   const [reservations, setReservations] = useState([]);
   const [resLoading, setResLoading] = useState(false);
   const [resFetched, setResFetched] = useState(false);
+  const [imagePreview, setImagePreview] = useState(null);
+
+  // state để chọn ảnh avatar
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [imageFile, setImageFile] = useState(null);
 
   const fetchMyReservations = async () => {
     if (!user) return;
     setResLoading(true);
     try {
       const { data } = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/reservations/my`
+        `${import.meta.env.VITE_API_URL}/api/reservations/my`,
       );
       setReservations(data);
     } catch {
@@ -140,11 +186,52 @@ const Profile = () => {
     navigate("/");
   };
 
-  const avatarSrc   = user?.avatar || assets.profile;
-  const displayName = user?.name   || "Khách";
-  const displayEmail= user?.email  || "";
-  const isAdmin     = user?.role   === "admin";
-  const joinDate    = user?.createdAt ? formatDate(user.createdAt) : "—";
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024)
+      return toast.error("Ảnh không được vượt quá 5MB");
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type))
+      return toast.error("Chỉ hỗ trợ JPG, PNG, WEBP");
+
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+    setShowAvatarModal(true);
+  };
+
+  const handleAvatarSubmit = async () => {
+    if (!imageFile) return;
+    try {
+      setAvatarUploading(true);
+      const imageUrl = await uploadToCloudinary(imageFile);
+      const { data } = await axios.put(
+        `${import.meta.env.VITE_API_URL}/api/users/update-avatar`,
+        { avatar: imageUrl },
+      );
+      update(data.data);
+      toast.success("Cập nhật ảnh đại diện thành công!");
+      setShowAvatarModal(false);
+      setImageFile(null);
+      setImagePreview(null);
+    } catch {
+      toast.error("Cập nhật ảnh thất bại");
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
+
+  const handleAvatarCancel = () => {
+    setShowAvatarModal(false);
+    setImageFile(null);
+    setImagePreview(null);
+  };
+
+  const avatarSrc = user?.avatar || assets.profile;
+  const displayName = user?.name || "Khách";
+  const displayEmail = user?.email || "";
+  const isAdmin = user?.role === "admin";
+  const joinDate = user?.createdAt ? formatDate(user.createdAt) : "—";
 
   const successOrders = orders.filter((o) => o.status === "completed").length;
 
@@ -152,27 +239,46 @@ const Profile = () => {
     <div className="min-h-screen relative overflow-hidden">
       {/* Hero */}
       <section className="relative px-6 md:px-16 lg:px-24 pt-36 pb-10 overflow-hidden">
-        <BlurCircle top="50%" left="50%" size="500px" center color="bg-primary/50" />
+        <BlurCircle
+          top="50%"
+          left="50%"
+          size="500px"
+          center
+          color="bg-primary/50"
+        />
         <div className="relative z-10 flex flex-col md:flex-row items-center md:items-end gap-6 max-w-4xl mx-auto">
           {/* Avatar */}
           <div className="relative shrink-0">
             <div className="w-28 h-28 rounded-3xl overflow-hidden ring-4 ring-white shadow-xl">
               <img
-                src={avatarSrc}
+                src={user?.avatar || assets.profile}
                 alt={displayName}
                 className="w-full h-full object-cover"
-                onError={(e) => { e.target.src = assets.profile; }}
+                onError={(e) => {
+                  e.target.src = assets.profile;
+                }}
               />
             </div>
-            <button className="absolute -bottom-2 -right-2 w-8 h-8 bg-primary-dull text-white rounded-full flex items-center justify-center shadow-md hover:bg-primary-dull/90 transition cursor-pointer">
+            <button
+              onClick={() => setShowAvatarModal(true)}
+              className="absolute -bottom-2 -right-2 w-8 h-8 bg-primary-dull text-white rounded-full flex items-center justify-center shadow-md hover:bg-primary-dull/90 transition cursor-pointer"
+            >
               <Camera className="w-4 h-4" />
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={handleImageChange}
+              />
             </button>
           </div>
 
           {/* Name + meta */}
           <div className="flex-1 text-center md:text-left">
             <div className="flex items-center gap-2 justify-center md:justify-start mb-1">
-              <h1 className="text-3xl font-bold text-gray-800">{displayName}</h1>
+              <h1 className="text-3xl font-bold text-gray-800">
+                {displayName}
+              </h1>
               {isAdmin && (
                 <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary-dull bg-primary/60 px-2.5 py-0.5 rounded-full">
                   <ShieldCheck className="w-3 h-3" /> Admin
@@ -188,10 +294,21 @@ const Profile = () => {
           {/* Stats */}
           <div className="flex gap-4 shrink-0">
             {[
-              { label: "Đơn hàng", value: ordersLoading ? "…" : orders.length, icon: Package },
-              { label: "Đặt bàn", value: resLoading ? "…" : reservations.length, icon: CalendarDays },
+              {
+                label: "Đơn hàng",
+                value: ordersLoading ? "…" : orders.length,
+                icon: Package,
+              },
+              {
+                label: "Đặt bàn",
+                value: resLoading ? "…" : reservations.length,
+                icon: CalendarDays,
+              },
             ].map(({ label, value, icon: Icon }) => (
-              <div key={label} className="bg-white rounded-2xl px-5 py-3 text-center shadow-sm min-w-[80px]">
+              <div
+                key={label}
+                className="bg-white rounded-2xl px-5 py-3 text-center shadow-sm min-w-20"
+              >
                 <p className="text-2xl font-bold text-primary-dull">{value}</p>
                 <p className="text-xs text-gray-400 mt-0.5">{label}</p>
               </div>
@@ -226,21 +343,31 @@ const Profile = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5 animate-fadeIn">
               {/* Info card */}
               <div className="md:col-span-2 bg-white rounded-3xl p-7 shadow-sm space-y-5">
-                <h2 className="text-lg font-bold text-gray-800 mb-1">Thông tin tài khoản</h2>
+                <h2 className="text-lg font-bold text-gray-800 mb-1">
+                  Thông tin tài khoản
+                </h2>
 
                 {[
-                  { label: "Họ và tên",   value: displayName,                          icon: User },
-                  { label: "Email",        value: displayEmail,                         icon: Mail },
-                  { label: "Vai trò",      value: isAdmin ? "Quản trị viên" : "Khách hàng", icon: ShieldCheck },
-                  { label: "Ngày tham gia",value: joinDate,                             icon: Clock },
+                  { label: "Họ và tên", value: displayName, icon: User },
+                  { label: "Email", value: displayEmail, icon: Mail },
+                  {
+                    label: "Vai trò",
+                    value: isAdmin ? "Quản trị viên" : "Khách hàng",
+                    icon: ShieldCheck,
+                  },
+                  { label: "Ngày tham gia", value: joinDate, icon: Clock },
                 ].map(({ label, value, icon: Icon }) => (
                   <div key={label} className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-xl bg-[#F5EDE3] flex items-center justify-center shrink-0">
                       <Icon className="w-4.5 h-4.5 text-primary-dull" />
                     </div>
                     <div>
-                      <p className="text-xs text-gray-400 font-medium">{label}</p>
-                      <p className="text-sm text-gray-700 font-semibold mt-0.5">{value}</p>
+                      <p className="text-xs text-gray-400 font-medium">
+                        {label}
+                      </p>
+                      <p className="text-sm text-gray-700 font-semibold mt-0.5">
+                        {value}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -249,7 +376,9 @@ const Profile = () => {
               {/* Actions card */}
               <div className="space-y-4">
                 <div className="bg-white rounded-3xl p-6 shadow-sm">
-                  <h3 className="text-sm font-bold text-gray-700 mb-4">Tài khoản</h3>
+                  <h3 className="text-sm font-bold text-gray-700 mb-4">
+                    Tài khoản
+                  </h3>
                   <div className="space-y-2">
                     <button className="w-full flex items-center justify-between px-4 py-3 rounded-2xl bg-[#F5EDE3] text-sm font-medium text-gray-700 hover:bg-primary/60 transition cursor-pointer">
                       <span className="flex items-center gap-2">
@@ -273,9 +402,20 @@ const Profile = () => {
 
                 {/* Summary mini */}
                 <div className="bg-primary-dull rounded-3xl p-6 text-white relative overflow-hidden">
-                  <BlurCircle bottom="-40px" right="-40px" size="120px" color="bg-white/10" blur={false} index={0} />
-                  <p className="text-xs font-semibold uppercase tracking-widest text-white/60 mb-1">Tổng cộng</p>
-                  <p className="text-4xl font-bold mb-1">{ordersLoading ? "…" : orders.length}</p>
+                  <BlurCircle
+                    bottom="-40px"
+                    right="-40px"
+                    size="120px"
+                    color="bg-white/10"
+                    blur={false}
+                    index={0}
+                  />
+                  <p className="text-xs font-semibold uppercase tracking-widest text-white/60 mb-1">
+                    Tổng cộng
+                  </p>
+                  <p className="text-4xl font-bold mb-1">
+                    {ordersLoading ? "…" : orders.length}
+                  </p>
                   <p className="text-sm text-white/70">đơn hàng đã đặt</p>
                   <div className="mt-3 pt-3 border-t border-white/20">
                     <p className="text-4xl font-bold mb-1">
@@ -292,7 +432,9 @@ const Profile = () => {
           {activeTab === "orders" && (
             <div className="space-y-4 animate-fadeIn">
               <div className="flex items-center justify-between mb-2">
-                <h2 className="text-lg font-bold text-gray-800">Lịch sử đơn hàng</h2>
+                <h2 className="text-lg font-bold text-gray-800">
+                  Lịch sử đơn hàng
+                </h2>
                 <span className="text-sm text-gray-400">
                   {ordersFetched ? `${orders.length} đơn` : ""}
                 </span>
@@ -305,12 +447,19 @@ const Profile = () => {
               ) : !ordersFetched || orders.length === 0 ? (
                 <div className="bg-white rounded-3xl p-10 shadow-sm text-center">
                   <AlertCircle className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500 font-medium mb-1">Chưa có đơn hàng nào</p>
-                  <p className="text-sm text-gray-400">Hãy đặt món để trải nghiệm ẩm thực DoMasala!</p>
+                  <p className="text-gray-500 font-medium mb-1">
+                    Chưa có đơn hàng nào
+                  </p>
+                  <p className="text-sm text-gray-400">
+                    Hãy đặt món để trải nghiệm ẩm thực DoMasala!
+                  </p>
                 </div>
               ) : (
                 orders.map((order) => (
-                  <div key={order._id} className="bg-white rounded-3xl p-6 shadow-sm">
+                  <div
+                    key={order._id}
+                    className="bg-white rounded-3xl p-6 shadow-sm"
+                  >
                     <div className="flex items-start justify-between gap-4 mb-4">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
@@ -323,12 +472,16 @@ const Profile = () => {
                           <Clock className="w-3.5 h-3.5" />
                           {formatDate(order.createdAt)}
                           {order.paymentMethod && (
-                            <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-medium ${
-                              order.paymentMethod === "vnpay"
-                                ? "bg-blue-50 text-blue-600"
-                                : "bg-gray-100 text-gray-600"
-                            }`}>
-                              {order.paymentMethod === "vnpay" ? "VNPay" : "Tiền mặt"}
+                            <span
+                              className={`ml-2 px-2 py-0.5 rounded-full text-xs font-medium ${
+                                order.paymentMethod === "vnpay"
+                                  ? "bg-blue-50 text-blue-600"
+                                  : "bg-gray-100 text-gray-600"
+                              }`}
+                            >
+                              {order.paymentMethod === "vnpay"
+                                ? "VNPay"
+                                : "Tiền mặt"}
                             </span>
                           )}
                         </p>
@@ -341,12 +494,17 @@ const Profile = () => {
                     {order.items && order.items.length > 0 && (
                       <div className="space-y-2">
                         {order.items.map((item, i) => (
-                          <div key={i} className="flex items-center justify-between bg-[#F5EDE3] rounded-2xl px-4 py-2.5">
+                          <div
+                            key={i}
+                            className="flex items-center justify-between bg-[#F5EDE3] rounded-2xl px-4 py-2.5"
+                          >
                             <div className="flex items-center gap-2">
                               <span className="w-5 h-5 rounded-full bg-primary-dull/20 text-primary-dull text-xs font-bold flex items-center justify-center">
                                 {item.quantity}
                               </span>
-                              <span className="text-sm text-gray-700 font-medium">{item.name}</span>
+                              <span className="text-sm text-gray-700 font-medium">
+                                {item.name}
+                              </span>
                             </div>
                             <span className="text-sm text-gray-500">
                               {(item.price * item.quantity).toLocaleString()}đ
@@ -365,10 +523,13 @@ const Profile = () => {
           {activeTab === "reservations" && (
             <div className="space-y-4 animate-fadeIn">
               <div className="flex items-center justify-between mb-2">
-                <h2 className="text-lg font-bold text-gray-800">Lịch sử đặt bàn</h2>
+                <h2 className="text-lg font-bold text-gray-800">
+                  Lịch sử đặt bàn
+                </h2>
                 <span className="text-sm text-gray-400">
                   {resFetched ? `${reservations.length} lần` : ""}
-                </span>              </div>
+                </span>{" "}
+              </div>
 
               {resLoading ? (
                 <div className="flex items-center justify-center py-16">
@@ -377,12 +538,19 @@ const Profile = () => {
               ) : !resFetched || reservations.length === 0 ? (
                 <div className="bg-white rounded-3xl p-10 shadow-sm text-center">
                   <AlertCircle className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500 font-medium mb-1">Chưa có đặt bàn nào</p>
-                  <p className="text-sm text-gray-400">Hãy đặt bàn để trải nghiệm ẩm thực DoMasala!</p>
+                  <p className="text-gray-500 font-medium mb-1">
+                    Chưa có đặt bàn nào
+                  </p>
+                  <p className="text-sm text-gray-400">
+                    Hãy đặt bàn để trải nghiệm ẩm thực DoMasala!
+                  </p>
                 </div>
               ) : (
                 reservations.map((res) => (
-                  <div key={res._id} className="bg-white rounded-3xl p-6 shadow-sm">
+                  <div
+                    key={res._id}
+                    className="bg-white rounded-3xl p-6 shadow-sm"
+                  >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex items-start gap-4">
                         <div className="w-12 h-12 rounded-2xl bg-[#F5EDE3] flex items-center justify-center shrink-0">
@@ -406,7 +574,9 @@ const Profile = () => {
                             </span>
                           </div>
                           {res.note && (
-                            <p className="text-xs text-gray-400 mt-1.5 italic">"{res.note}"</p>
+                            <p className="text-xs text-gray-400 mt-1.5 italic">
+                              "{res.note}"
+                            </p>
                           )}
                         </div>
                       </div>
@@ -425,6 +595,67 @@ const Profile = () => {
           )}
         </div>
       </section>
+
+      {/* Avatar Modal */}
+      {showAvatarModal && (
+        <div
+          className="fixed inset-0 z-52 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          onClick={handleAvatarCancel}
+        >
+          <div
+            className="animate-fadeIn rounded-3xl p-6 w-full max-w-sm mx-4 space-y-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="font-bold text-white text-lg">
+              Cập nhật ảnh đại diện
+            </h3>
+
+            {/* Preview với hover effect */}
+            <div className="flex justify-center">
+              <div className="relative w-90 h-90 rounded-3xl overflow-hidden ring-2 ring-primary-dull/20 cursor-pointer group">
+                <img
+                  src={imagePreview || avatarSrc}
+                  className="w-full h-full object-cover transition-all duration-200 group-hover:blur-sm group-hover:brightness-75"
+                />
+                {/* Overlay — chỉ hiện khi hover */}
+                <label className="absolute inset-0 flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-pointer">
+                  <Camera className="w-7 h-7 text-white drop-shadow" />
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    onChange={handleImageChange}
+                  />
+                </label>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <button
+                onClick={handleAvatarCancel}
+                disabled={avatarUploading}
+                className="flex-1 py-3 rounded-2xl border border-gray-200 text-white text-sm font-medium hover:bg-gray-50 hover:text-gray-700 transition disabled:opacity-50 cursor-pointer"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleAvatarSubmit}
+                disabled={avatarUploading}
+                className="flex-1 py-3 rounded-2xl bg-primary-dull text-white text-sm font-semibold hover:bg-primary-dull/90 transition disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                {avatarUploading ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" /> Đang lưu...
+                  </>
+                ) : (
+                  "Lưu"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

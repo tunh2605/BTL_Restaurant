@@ -1,4 +1,10 @@
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import axios from "axios";
 
 const AuthContext = createContext();
@@ -53,11 +59,17 @@ export const AuthProvider = ({ children }) => {
   const logout = useCallback(async () => {
     try {
       // Nếu user đăng nhập bằng Google, call backend logout endpoint
-      if (user && user.avatar && user.avatar.includes('googleusercontent.com')) {
-        await axios.get(`${import.meta.env.VITE_API_URL}/api/auth/logout-by-oauth`);
+      if (
+        user &&
+        user.avatar &&
+        user.avatar.includes("googleusercontent.com")
+      ) {
+        await axios.get(
+          `${import.meta.env.VITE_API_URL}/api/auth/logout-by-oauth`,
+        );
       }
     } catch (error) {
-      console.error('Error logging out from OAuth:', error);
+      console.error("Error logging out from OAuth:", error);
       // Vẫn tiếp tục logout locally dù có lỗi
     } finally {
       // Luôn luôn clear local state và localStorage
@@ -68,6 +80,12 @@ export const AuthProvider = ({ children }) => {
       delete axios.defaults.headers.common["Authorization"];
     }
   }, [user]);
+
+  // Cập nhật user
+  const update = useCallback((userData) => {
+    setUser(userData);
+    localStorage.setItem("user", JSON.stringify(userData));
+  }, []);
 
   const isAdmin = user?.role === "admin" || user?.role === "hqadmin";
   const isHQAdmin = user?.role === "hqadmin";
@@ -83,6 +101,7 @@ export const AuthProvider = ({ children }) => {
         isLoggedIn,
         isHQAdmin,
         login,
+        update,
         logout,
       }}
     >

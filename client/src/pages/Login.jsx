@@ -24,7 +24,9 @@ const LoginPage = () => {
         },
       );
       login(data.user, data.token);
-      data.user.role === "admin" ? navigate("/admin") : navigate("/");
+      data.user.role === "admin" || data.user.role === "hqadmin"
+        ? navigate("/admin")
+        : navigate("/");
     } catch (err) {
       toast.error(err.response?.data?.message || "Đăng nhập thất bại.");
     }

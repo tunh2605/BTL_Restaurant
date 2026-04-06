@@ -2,53 +2,109 @@ import { useState, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
-import { dummyReviews } from "../assets/assets";
 import StarRating from "./StarRating";
 import AddReviewForm from "./AddReviewForm";
+import { useAuth } from "../context/AuthContext";
 
 const ReviewSection = ({ foodId }) => {
-  const [reviews, setReviews] = useState(
-    dummyReviews.filter((r) => r.food == foodId), // sử dụng dữ liệu mẫu, sau đổi lại thành [] để fetch
-  );
+  const { user } = useAuth();
+  const [reviews, setReviews] = useState([]);
+  const [userReview, setUserReview] = useState(null);
   const [showAll, setShowAll] = useState(false);
-  const [fetchLoading, setFetchLoading] = useState(false); // sau set thành true
+  const [fetchLoading, setFetchLoading] = useState(true);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [fetchError, setFetchError] = useState("");
 
-  // fetch reviews theo foodId
-  // useEffect(() => {
-  //   if (!foodId) return;
+  const API = import.meta.env.VITE_API_URL;
 
-  //   const fetchReviews = async () => {
-  //     try {
-  //       setFetchLoading(true);
-  //       setFetchError("");
-  //       const { data } = await axios.get(`/api/reviews?food=${foodId}`);
-  //       setReviews(data); // API trả về mảng Review[]
-  //     } catch (err) {
-  //       setFetchError("Không thể tải đánh giá. Vui lòng thử lại sau.");
-  //     } finally {
-  //       setFetchLoading(false);
-  //     }
-  //   };
+  // Fetch tất cả reviews + review của user
+  useEffect(() => {
+    if (!foodId) return;
 
-  //   fetchReviews();
-  // }, [foodId]);
+    const fetchReviews = async () => {
+      try {
+        setFetchLoading(true);
+        setFetchError("");
+        setUserReview(null);
 
-  // gửi review mới
+        const requests = [axios.get(`${API}/api/reviews/food/${foodId}`)];
+
+        // Nếu đã đăng nhập thì fetch review của user luôn
+        if (user) {
+          requests.push(
+            axios.get(`${API}/api/reviews/user-review/${user._id}/${foodId}`),
+          );
+        }
+
+        const [reviewsRes, userReviewRes] = await Promise.allSettled(requests);
+
+        if (reviewsRes.status === "fulfilled") {
+          setReviews(reviewsRes.value.data?.data || []);
+        }
+
+        if (userReviewRes?.status === "fulfilled") {
+          setUserReview(userReviewRes.value.data?.data || null);
+        }
+      } catch {
+        setFetchError("Không thể tải đánh giá. Vui lòng thử lại sau.");
+      } finally {
+        setFetchLoading(false);
+      }
+    };
+
+    fetchReviews();
+  }, [foodId, user]);
+
+  // Thêm review mới
   const handleAddReview = async ({ rating, comment, name }) => {
     try {
       setSubmitLoading(true);
-      const { data } = await axios.post("/api/reviews", {
-        food: foodId,
+      const { data } = await axios.post(`${API}/api/reviews/add`, {
+        foodId,
         name,
         rating,
         comment,
       });
-      // thêm review mới lên đầu danh sách
-      setReviews((prev) => [data, ...prev]);
+      setUserReview(data.data);
+      setReviews((prev) => [data.data, ...prev]);
+      toast.success("Đánh giá thành công!");
     } catch (err) {
-      toast.error("Gửi đánh giá thất bại. Vui lòng thử lại.");
+      toast.error(err.response?.data?.message || "Gửi đánh giá thất bại");
+    } finally {
+      setSubmitLoading(false);
+    }
+  };
+
+  // Cập nhật review
+  const handleUpdateReview = async ({ rating, comment }) => {
+    try {
+      setSubmitLoading(true);
+      const { data } = await axios.put(
+        `${API}/api/reviews/update/${userReview._id}`,
+        { rating, comment },
+      );
+      setUserReview(data.data);
+      setReviews((prev) =>
+        prev.map((r) => (r._id === userReview._id ? data.data : r)),
+      );
+      toast.success("Cập nhật đánh giá thành công!");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Cập nhật thất bại");
+    } finally {
+      setSubmitLoading(false);
+    }
+  };
+
+  // Xóa review
+  const handleDeleteReview = async () => {
+    try {
+      setSubmitLoading(true);
+      await axios.delete(`${API}/api/reviews/delete/${userReview._id}`);
+      setReviews((prev) => prev.filter((r) => r._id !== userReview._id));
+      setUserReview(null);
+      toast.success("Xóa đánh giá thành công!");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Xóa thất bại");
     } finally {
       setSubmitLoading(false);
     }
@@ -59,11 +115,13 @@ const ReviewSection = ({ foodId }) => {
       ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
       : 0;
 
-  const displayedReviews = showAll ? reviews : reviews.slice(0, 2);
+  // Lọc bỏ review của user khỏi danh sách chung (tránh hiện trùng)
+  const otherReviews = reviews.filter((r) => r._id !== userReview?._id);
+  const displayedReviews = showAll ? otherReviews : otherReviews.slice(0, 2);
 
   return (
     <div className="mt-16 mb-12 space-y-8">
-      {/* tiêu đề + tổng số sao */}
+      {/* Tiêu đề */}
       <div>
         <h2 className="text-2xl font-bold text-gray-800">
           Đánh giá từ cộng đồng
@@ -78,18 +136,26 @@ const ReviewSection = ({ foodId }) => {
         )}
       </div>
 
-      {/* trạng thái loading / lỗi / rỗng */}
+      {/* Form thêm / hiển thị review của user */}
+      <AddReviewForm
+        existingReview={userReview}
+        onSubmit={handleAddReview}
+        onUpdate={handleUpdateReview}
+        onDelete={handleDeleteReview}
+        loading={submitLoading}
+      />
+
+      {/* Danh sách reviews */}
       {fetchLoading ? (
         <p className="text-gray-400 text-sm">Đang tải đánh giá...</p>
       ) : fetchError ? (
         <p className="text-red-400 text-sm">{fetchError}</p>
-      ) : reviews.length === 0 ? (
+      ) : otherReviews.length === 0 ? (
         <p className="text-gray-400 text-sm">
           Chưa có đánh giá nào. Hãy là người đầu tiên!
         </p>
       ) : (
         <>
-          {/* Danh sách review */}
           <div className="space-y-5">
             {displayedReviews.map((review) => (
               <div
@@ -123,25 +189,21 @@ const ReviewSection = ({ foodId }) => {
             ))}
           </div>
 
-          {/* nút xem thêm */}
-          {reviews.length > 2 && (
+          {otherReviews.length > 2 && (
             <button
               onClick={() => setShowAll((prev) => !prev)}
               className="flex items-center gap-2 text-primary-dull font-medium text-sm hover:opacity-75 transition"
             >
-              {showAll ? "Thu gọn" : `Xem tất cả ${reviews.length} đánh giá`}
+              {showAll
+                ? "Thu gọn"
+                : `Xem tất cả ${otherReviews.length} đánh giá`}
               <ChevronDown
-                className={`w-4 h-4 transition-transform ${
-                  showAll ? "rotate-180" : ""
-                }`}
+                className={`w-4 h-4 transition-transform ${showAll ? "rotate-180" : ""}`}
               />
             </button>
           )}
         </>
       )}
-
-      {/* form thêm đánh giá */}
-      <AddReviewForm onSubmit={handleAddReview} loading={submitLoading} />
     </div>
   );
 };

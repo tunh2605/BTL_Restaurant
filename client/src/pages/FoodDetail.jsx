@@ -18,13 +18,29 @@ import toast from "react-hot-toast";
 const FoodDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { foods, restaurants } = useFood();
+  const { foods, restaurants, loading } = useFood();
   const { addToCart } = useCart();
-  const food = foods.find((f) => f._id === id);
 
   const [quantity, setQuantity] = useState(1);
   const [note, setNote] = useState("");
   const [branch, setBranch] = useState("");
+
+  const food = foods.find((f) => f._id === id);
+
+  // guard sau các hooks
+  if (loading)
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin text-primary-dull" />
+      </div>
+    );
+
+  if (!food)
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-gray-400">Không tìm thấy món ăn</p>
+      </div>
+    );
 
   const handleAddToCart = () => {
     if (!branch) {
@@ -186,7 +202,7 @@ const FoodDetail = () => {
           </div>
         </div>
       </form>
-      <ReviewSection />
+      <ReviewSection foodId={id} />
     </div>
   );
 };
