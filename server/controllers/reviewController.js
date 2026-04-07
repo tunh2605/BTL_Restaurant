@@ -117,7 +117,7 @@ export const updateReview = async (req, res) => {
     const updated = await Review.findByIdAndUpdate(
       reviewId,
       { rating, comment },
-      { new: true },
+      { returnDocument: "after" },
     );
 
     res

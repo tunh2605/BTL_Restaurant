@@ -11,12 +11,14 @@ export const getAllUsers = async (req, res) => {
     // Lấy số lượng đặt bàn cho từng user
     const usersWithStats = await Promise.all(
       users.map(async (user) => {
-        const reservationCount = await Reservation.countDocuments({ user: user._id });
+        const reservationCount = await Reservation.countDocuments({
+          user: user._id,
+        });
         return {
           ...user.toObject(),
           reservationCount,
         };
-      })
+      }),
     );
 
     res.json(usersWithStats);
@@ -38,13 +40,15 @@ export const updateUserRole = async (req, res) => {
 
     // Không cho phép tự thay đổi quyền của chính mình
     if (req.user.id === id) {
-      return res.status(400).json({ message: "Không thể thay đổi quyền của chính mình." });
+      return res
+        .status(400)
+        .json({ message: "Không thể thay đổi quyền của chính mình." });
     }
 
     const user = await User.findByIdAndUpdate(
       id,
       { role },
-      { new: true }
+      { returnDocument: "after" },
     ).select("-password");
 
     if (!user) {
@@ -64,7 +68,9 @@ export const deleteUser = async (req, res) => {
 
     // Không cho phép tự xoá chính mình
     if (req.user.id === id) {
-      return res.status(400).json({ message: "Không thể xoá tài khoản của chính mình." });
+      return res
+        .status(400)
+        .json({ message: "Không thể xoá tài khoản của chính mình." });
     }
 
     const user = await User.findByIdAndDelete(id);
@@ -103,8 +109,12 @@ export const getDashboardStats = async (req, res) => {
   try {
     const totalUsers = await User.countDocuments();
     const totalReservations = await Reservation.countDocuments();
-    const pendingReservations = await Reservation.countDocuments({ status: "pending" });
-    const confirmedReservations = await Reservation.countDocuments({ status: "confirmed" });
+    const pendingReservations = await Reservation.countDocuments({
+      status: "pending",
+    });
+    const confirmedReservations = await Reservation.countDocuments({
+      status: "confirmed",
+    });
 
     // Orders
     const totalOrders = await Order.countDocuments();
@@ -135,25 +145,36 @@ export const getDashboardStats = async (req, res) => {
     const revenueThisMonth = revenueThisMonthResult[0]?.total || 0;
 
     const revenueLastMonthResult = await Payment.aggregate([
-      { $match: { status: "success", paidAt: { $gte: startOfLastMonth, $lte: endOfLastMonth } } },
+      {
+        $match: {
+          status: "success",
+          paidAt: { $gte: startOfLastMonth, $lte: endOfLastMonth },
+        },
+      },
       { $group: { _id: null, total: { $sum: "$amount" } } },
     ]);
     const revenueLastMonth = revenueLastMonthResult[0]?.total || 0;
 
     // Orders tháng này vs tháng trước
-    const ordersThisMonth = await Order.countDocuments({ createdAt: { $gte: startOfMonth } });
+    const ordersThisMonth = await Order.countDocuments({
+      createdAt: { $gte: startOfMonth },
+    });
     const ordersLastMonth = await Order.countDocuments({
       createdAt: { $gte: startOfLastMonth, $lte: endOfLastMonth },
     });
 
     // Users mới tháng này và tháng trước
-    const newUsersThisMonth = await User.countDocuments({ createdAt: { $gte: startOfMonth } });
+    const newUsersThisMonth = await User.countDocuments({
+      createdAt: { $gte: startOfMonth },
+    });
     const newUsersLastMonth = await User.countDocuments({
       createdAt: { $gte: startOfLastMonth, $lte: endOfLastMonth },
     });
 
     // Reservations tháng này và tháng trước
-    const reservationsThisMonth = await Reservation.countDocuments({ createdAt: { $gte: startOfMonth } });
+    const reservationsThisMonth = await Reservation.countDocuments({
+      createdAt: { $gte: startOfMonth },
+    });
     const reservationsLastMonth = await Reservation.countDocuments({
       createdAt: { $gte: startOfLastMonth, $lte: endOfLastMonth },
     });

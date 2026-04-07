@@ -192,7 +192,7 @@ const ReviewSection = ({ foodId }) => {
           {otherReviews.length > 2 && (
             <button
               onClick={() => setShowAll((prev) => !prev)}
-              className="flex items-center gap-2 text-primary-dull font-medium text-sm hover:opacity-75 transition"
+              className="flex items-center gap-2 text-primary-dull font-medium text-sm hover:opacity-75 transition cursor-pointer"
             >
               {showAll
                 ? "Thu gọn"

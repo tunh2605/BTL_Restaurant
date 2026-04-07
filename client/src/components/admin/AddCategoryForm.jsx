@@ -66,7 +66,7 @@ const AddCategoryForm = ({ open, onClose }) => {
 
           <button
             onClick={onClose}
-            className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition"
+            className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -99,7 +99,7 @@ const AddCategoryForm = ({ open, onClose }) => {
         <div className="flex gap-3 pt-2">
           <button
             onClick={onClose}
-            className="flex-1 py-3 rounded-2xl border border-gray-200 text-gray-500 hover:bg-gray-50"
+            className="flex-1 py-3 rounded-2xl border border-gray-200 text-gray-500 hover:bg-gray-50 cursor-pointer"
           >
             Hủy
           </button>
@@ -107,7 +107,7 @@ const AddCategoryForm = ({ open, onClose }) => {
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="flex-1 py-3 rounded-2xl bg-secondary-dull text-primary-dull font-semibold disabled:opacity-60 flex items-center justify-center gap-2"
+            className="flex-1 py-3 rounded-2xl bg-secondary-dull text-primary-dull font-semibold disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
           >
             {loading ? (
               <>

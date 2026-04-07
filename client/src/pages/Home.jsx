@@ -11,7 +11,7 @@ const Home = () => {
         <BlurCircle top="50%" left="50%" size="480px" center />
 
         <div className="flex flex-col md:flex-row items-center gap-12">
-          <div className="flex-1 max-w-lg">
+          <div className="flex-1 max-w-lg text-center md:text-left">
             <h1 className="text-5xl lg:text-6xl font-bold text-gray-800 leading-tight mb-4">
               Hương vị Ấn Độ
               <span className="italic text-primary-dull"> thư giãn </span>
@@ -21,7 +21,7 @@ const Home = () => {
               Thưởng thức cà ri đậm đà và Masala Chai truyền thống trong một
               không gian yên bình, hiện đại.
             </p>
-            <div className="flex gap-4 flex-wrap">
+            <div className="flex gap-4 flex-wrap justify-center md:justify-start">
               <button
                 className="px-6 py-3 bg-primary-dull text-white rounded-full font-medium hover:bg-primary-dull/90 transition cursor-pointer"
                 onClick={() => navigate("/menu")}

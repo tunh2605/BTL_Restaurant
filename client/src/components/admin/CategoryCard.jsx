@@ -22,7 +22,7 @@ const CategoryCard = ({
       <div className="flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
         <button
           onClick={() => onEdit?.(category)}
-          className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors"
+          className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors cursor-pointer"
         >
           <Pencil className="w-4 h-4" />
         </button>
@@ -30,7 +30,7 @@ const CategoryCard = ({
           onClick={() => {
             onDelete?.(category);
           }}
-          className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+          className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
         >
           <Trash2 className="w-4 h-4" />
         </button>

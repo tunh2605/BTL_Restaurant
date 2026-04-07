@@ -6,6 +6,7 @@ import {
   UtensilsCrossed,
   LayoutGrid,
   ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { useFood } from "../../context/FoodContext";
 import CategoryCard from "./CategoryCard";
@@ -16,6 +17,7 @@ import ConfirmModal from "./ConfirmModal";
 import UpdateCategoryForm from "./UpdateCategoryForm";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import getOptimizedImage from "../../libs/getOptimizedImage";
 
 const StatusBadge = ({ isAvailable }) => (
   <div className="flex items-center gap-1.5">
@@ -53,6 +55,7 @@ const ListFoodContent = ({ isHQAdmin = true }) => {
   const [activeCategory, setActiveCategory] = useState("all");
   const [visibleCount, setVisibleCount] = useState(4);
   const [modal, setModal] = useState(MODAL_CLOSED);
+  const [expanded, setExpanded] = useState(true);
   const navigate = useNavigate();
 
   const scrollRef = useRef();
@@ -66,6 +69,7 @@ const ListFoodContent = ({ isHQAdmin = true }) => {
 
   useEffect(() => {
     fetchFoods();
+    refreshCategories();
   }, []);
 
   if (loading) return <div>Đang tải...</div>;
@@ -124,7 +128,7 @@ const ListFoodContent = ({ isHQAdmin = true }) => {
             </div>
             {isHQAdmin && (
               <button
-                className="flex items-center gap-1.5 text-sm font-medium text-primary-dull hover:text-primary-dull/70 transition-colors"
+                className="flex items-center gap-1.5 text-sm font-medium text-primary-dull hover:text-primary-dull/70 transition-colors cursor-pointer"
                 onClick={() => openModal("add")}
               >
                 <Plus className="w-4 h-4" />
@@ -175,7 +179,7 @@ const ListFoodContent = ({ isHQAdmin = true }) => {
                 <button
                   key={cat._id}
                   onClick={() => handleCategoryChange(cat._id)}
-                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 cursor-pointer ${
                     activeCategory === cat._id
                       ? "bg-gray-800 text-white shadow-sm"
                       : "bg-gray-100 text-gray-500 hover:bg-gray-200"
@@ -204,7 +208,7 @@ const ListFoodContent = ({ isHQAdmin = true }) => {
               >
                 <div className="col-span-5 flex items-center gap-3">
                   <img
-                    src={food.image}
+                    src={getOptimizedImage(food.image)}
                     alt={food.name}
                     className="w-12 h-12 rounded-xl object-cover shrink-0"
                   />
@@ -213,7 +217,9 @@ const ListFoodContent = ({ isHQAdmin = true }) => {
                       {food.name}
                     </p>
                     <p className="text-xs text-gray-400 truncate">
-                      {(food.description || "").slice(0, 35)}...
+                      {food.description && food.description.length > 35
+                        ? food.description.slice(0, 35) + "..."
+                        : food.description || ""}
                     </p>
                   </div>
                 </div>
@@ -238,14 +244,14 @@ const ListFoodContent = ({ isHQAdmin = true }) => {
                 {isHQAdmin && (
                   <div className="col-span-1 flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                     <button
-                      className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors"
+                      className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors cursor-pointer"
                       onClick={() => navigate(`/admin/foods/edit/${food._id}`)}
                     >
                       <Pencil className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => openModal("deleteFood", food)}
-                      className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+                      className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -255,14 +261,27 @@ const ListFoodContent = ({ isHQAdmin = true }) => {
             ))}
           </div>
 
-          {visibleCount < foods.length && (
+          {visibleCount < foods.length ? (
             <button
-              onClick={() => setVisibleCount((v) => v + 4)}
-              className="w-full mt-4 py-3 text-sm font-semibold text-primary-dull hover:text-primary-dull/70 flex items-center justify-center gap-1.5 transition-colors"
+              onClick={() => {
+                setVisibleCount((v) => v + 4);
+              }}
+              className="w-full mt-4 py-3 text-sm font-semibold text-primary-dull hover:text-primary-dull/70 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
             >
               Xem thêm món ăn
-              <ChevronDown
-                className={`w-4 h-4 transition-transform ${open ? "rotate-180" : ""}`}
+              <ChevronDown className={`w-4 h-4 transition-transform `} />
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                setVisibleCount(4);
+                setExpanded(false);
+              }}
+              className="w-full mt-4 py-3 text-sm font-semibold text-primary-dull hover:text-primary-dull/70 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+            >
+              Thu gọn
+              <ChevronUp
+                className={`w-4 h-4 transition-transform ${expanded ? "rotate-180" : ""}`}
               />
             </button>
           )}

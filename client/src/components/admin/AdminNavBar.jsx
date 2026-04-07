@@ -204,7 +204,7 @@ const AdminNavBar = () => {
       <div ref={notifRef} className="relative">
         <button
           onClick={toggleNotif}
-          className="relative w-9 h-9 flex items-center justify-center rounded-full hover:bg-[#F5F0EB] transition-colors"
+          className="relative w-9 h-9 flex items-center justify-center rounded-full hover:bg-[#F5F0EB] transition-colors cursor-pointer"
         >
           <Bell className="w-5 h-5 text-[#7a6050]" />
           {unreadCount > 0 && (
@@ -234,7 +234,7 @@ const AdminNavBar = () => {
                 {unreadCount > 0 && (
                   <button
                     onClick={handleMarkAllRead}
-                    className="text-xs text-[#C8714A] hover:underline"
+                    className="text-xs text-[#C8714A] hover:underline cursor-pointer"
                   >
                     Đánh dấu đã đọc
                   </button>
@@ -294,7 +294,7 @@ const AdminNavBar = () => {
                         )}
                         <button
                           onClick={(e) => handleDelete(e, n._id)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 rounded-full flex items-center justify-center hover:bg-red-100"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 rounded-full flex items-center justify-center hover:bg-red-100 cursor-pointer"
                         >
                           <X className="w-3 h-3 text-red-400" />
                         </button>
@@ -310,7 +310,7 @@ const AdminNavBar = () => {
               <div className="px-4 py-2.5 border-t border-[#f0e4d8] shrink-0">
                 <button
                   onClick={handleDeleteAllRead}
-                  className="flex items-center gap-1.5 text-xs text-[#b09070] hover:text-red-500 transition-colors"
+                  className="flex items-center gap-1.5 text-xs text-[#b09070] hover:text-red-500 transition-colors cursor-pointer"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                   Xóa tất cả đã đọc
@@ -322,7 +322,7 @@ const AdminNavBar = () => {
       </div>
 
       {/* Settings */}
-      <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-[#F5F0EB] transition-colors">
+      <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-[#F5F0EB] transition-colors cursor-pointer">
         <Settings className="w-5 h-5 text-[#7a6050]" />
       </button>
 
@@ -336,7 +336,7 @@ const AdminNavBar = () => {
             setDropdownOpen((o) => !o);
             setNotifOpen(false);
           }}
-          className="flex items-center gap-3 hover:bg-[#F5F0EB] rounded-full pl-2 pr-1 py-1 transition-colors"
+          className="flex items-center gap-3 hover:bg-[#F5F0EB] rounded-full pl-2 pr-1 py-1 transition-colors cursor-pointer"
         >
           <div className="text-right hidden sm:block">
             <p className="text-sm font-semibold text-[#5a3020] leading-tight">
@@ -353,7 +353,7 @@ const AdminNavBar = () => {
             <img
               src={user.avatar}
               alt={user.name}
-              className="w-9 h-9 rounded-full object-cover border-2 border-[#C8714A]"
+              className="w-9 h-9 rounded-full object-cover border-2 border-[#C8714A] shrink-0"
             />
           ) : (
             <div className="w-9 h-9 rounded-full bg-[#C8714A] flex items-center justify-center border-2 border-[#C8714A] shrink-0">
@@ -376,7 +376,7 @@ const AdminNavBar = () => {
             <div className="py-1">
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
               >
                 <LogOut className="w-4 h-4" />
                 Đăng xuất

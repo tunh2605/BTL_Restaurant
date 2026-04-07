@@ -31,9 +31,13 @@ const Menu = () => {
         <p className="bg-primary/60 rounded-full px-4 py-0.5 text-primary-dull">
           Hương vị bản địa
         </p>
-        <h1 className="text-6xl font-bold p-8">
-          Thực đơn <span className="text-primary-dull italic">DoMasala</span>
-        </h1>
+        <div className="flex flex-col md:flex-row items-center gap-2 p-8">
+          <h1 className="text-6xl font-bold">Thực đơn</h1>
+          <h1 className="text-6xl font-bold text-primary-dull italic">
+            DoMasala
+          </h1>
+        </div>
+
         <p className="text-center text-gray-500 max-w-xl mx-auto">
           Khám phá hành trình vị giác xuyên lục địa với những nguyên liệu sạch
           nhất, gia vị thủ công và kỹ thuật nấu nướng truyền thống đầy cảm hứng.
@@ -71,8 +75,8 @@ const Menu = () => {
       {/* Food list */}
       {filteredFoods.length > 0 ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-10">
-          {filteredFoods.map((food) => (
-            <FoodCard food={food} key={food._id} />
+          {filteredFoods.map((food, i) => (
+            <FoodCard food={food} key={food._id} priority={i < 4} />
           ))}
         </div>
       ) : (

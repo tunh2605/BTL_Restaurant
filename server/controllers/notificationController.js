@@ -7,7 +7,9 @@ export const getNotifications = async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(50);
 
-    const unreadCount = await AdminNotification.countDocuments({ isRead: false });
+    const unreadCount = await AdminNotification.countDocuments({
+      isRead: false,
+    });
 
     res.json({ notifications, unreadCount });
   } catch (err) {
@@ -22,7 +24,7 @@ export const markAsRead = async (req, res) => {
     const noti = await AdminNotification.findByIdAndUpdate(
       id,
       { isRead: true, readAt: new Date() },
-      { new: true }
+      { returnDocument: "after" },
     );
 
     if (!noti) return res.status(404).json({ message: "Không tìm thấy." });
@@ -36,7 +38,10 @@ export const markAsRead = async (req, res) => {
 // ADMIN: Đánh dấu tất cả đã đọc
 export const markAllAsRead = async (req, res) => {
   try {
-    await AdminNotification.updateMany({ isRead: false }, { isRead: true, readAt: new Date() });
+    await AdminNotification.updateMany(
+      { isRead: false },
+      { isRead: true, readAt: new Date() },
+    );
     res.json({ message: "Đã đánh dấu tất cả là đã đọc." });
   } catch (err) {
     res.status(500).json({ message: "Lỗi server.", error: err.message });

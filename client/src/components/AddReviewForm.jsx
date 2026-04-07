@@ -112,7 +112,7 @@ const AddReviewForm = ({
               setComment(existingReview.comment);
               setIsEditing(true);
             }}
-            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-primary-dull transition-colors"
+            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-primary-dull transition-colors cursor-pointer"
           >
             <Pencil className="w-4 h-4" />
             Chỉnh sửa
@@ -120,7 +120,7 @@ const AddReviewForm = ({
           <button
             onClick={onDelete}
             disabled={loading}
-            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-red-500 transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-red-500 transition-colors disabled:opacity-50 cursor-pointer"
           >
             <Trash2 className="w-4 h-4" />
             Xóa
@@ -172,7 +172,7 @@ const AddReviewForm = ({
           <button
             type="button"
             onClick={() => setIsEditing(false)}
-            className="px-6 py-3 border border-gray-200 text-gray-500 rounded-full text-sm font-medium hover:bg-gray-50 transition"
+            className="px-6 py-3 border border-gray-200 text-gray-500 rounded-full text-sm font-medium hover:bg-gray-50 transition cursor-pointer"
           >
             Hủy
           </button>

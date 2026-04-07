@@ -139,7 +139,7 @@ const AdminSideBar = () => {
         <button
           onClick={handleLogout}
           title="Đăng xuất"
-          className="w-full flex items-center justify-center md:justify-start gap-3 px-2 md:px-4 py-2.5 rounded-2xl text-sm font-medium text-[#8a6a50] hover:bg-red-50 hover:text-red-500 transition-colors duration-150 group"
+          className="w-full flex items-center justify-center md:justify-start gap-3 px-2 md:px-4 py-2.5 rounded-2xl text-sm font-medium text-[#8a6a50] hover:bg-red-50 hover:text-red-500 transition-colors duration-150 group cursor-pointer"
         >
           <LogOut className="w-5 h-5 text-[#a08060] group-hover:text-red-400 shrink-0" />
           <span className="hidden md:inline">Đăng xuất</span>

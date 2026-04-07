@@ -8,7 +8,9 @@ export const createReservation = async (req, res) => {
     const { name, phone, date, time, numberOfPeople, note } = req.body;
 
     if (!name || !phone || !date || !time || !numberOfPeople) {
-      return res.status(400).json({ message: "Vui lòng điền đầy đủ thông tin." });
+      return res
+        .status(400)
+        .json({ message: "Vui lòng điền đầy đủ thông tin." });
     }
 
     const reservation = await Reservation.create({
@@ -40,8 +42,9 @@ export const createReservation = async (req, res) => {
 // ─── USER: Lấy đặt bàn của user hiện tại ─────────────────────────────────────
 export const getMyReservations = async (req, res) => {
   try {
-    const reservations = await Reservation.find({ user: req.user.id })
-      .sort({ createdAt: -1 });
+    const reservations = await Reservation.find({ user: req.user.id }).sort({
+      createdAt: -1,
+    });
 
     res.json(reservations);
   } catch (err) {
@@ -76,7 +79,7 @@ export const updateReservationStatus = async (req, res) => {
     const reservation = await Reservation.findByIdAndUpdate(
       id,
       { status },
-      { new: true }
+      { returnDocument: "after" },
     ).populate("user", "name email avatar");
 
     if (!reservation) {

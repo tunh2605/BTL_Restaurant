@@ -17,6 +17,7 @@ import ConfirmModal from "../../components/admin/ConfirmModal.jsx";
 import { useFood } from "../../context/FoodContext.jsx";
 import toast from "react-hot-toast";
 import EditRestaurantModal from "../../components/admin/EditRestaurantModal.jsx";
+import getOptimizedImage from "../../libs/getOptimizedImage.js";
 
 // ── RestaurantCard ─────────────────────────────────────────
 const RestaurantCard = ({ restaurant, index }) => {
@@ -46,7 +47,7 @@ const RestaurantCard = ({ restaurant, index }) => {
         {/* Image */}
         <div className="relative h-48 overflow-hidden">
           <img
-            src={restaurant.images?.[0]?.url}
+            src={getOptimizedImage(restaurant.images?.[0]?.url)}
             alt={restaurant.name}
             className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
           />

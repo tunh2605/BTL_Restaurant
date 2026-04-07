@@ -149,7 +149,7 @@ const EditRestaurantModal = ({ open, onClose, restaurant }) => {
           </h2>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+            className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -240,12 +240,12 @@ const EditRestaurantModal = ({ open, onClose, restaurant }) => {
               onClick={() =>
                 setForm((prev) => ({ ...prev, isOpen: !prev.isOpen }))
               }
-              className={`w-12 h-6 flex items-center rounded-full p-1 transition-all ${
+              className={`w-12 h-6 flex items-center rounded-full p-1 transition-all cursor-pointer ${
                 form.isOpen ? "bg-green-500" : "bg-gray-300"
               }`}
             >
               <div
-                className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-all ${
+                className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-all cursor-pointer ${
                   form.isOpen ? "translate-x-6" : "translate-x-0"
                 }`}
               />
@@ -269,7 +269,7 @@ const EditRestaurantModal = ({ open, onClose, restaurant }) => {
                     />
                     <button
                       onClick={() => removeImage(i)}
-                      className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                      className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
                     >
                       ×
                     </button>
@@ -308,14 +308,14 @@ const EditRestaurantModal = ({ open, onClose, restaurant }) => {
           <button
             onClick={onClose}
             disabled={uploading}
-            className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-50"
+            className="px-5 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-50 cursor-pointer"
           >
             Huỷ
           </button>
           <button
             onClick={handleSubmit}
             disabled={uploading}
-            className="px-8 py-2.5 bg-primary-dull text-white font-semibold rounded-xl hover:bg-primary-dull/90 transition-all shadow-sm hover:shadow-md active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-8 py-2.5 bg-primary-dull text-white font-semibold rounded-xl hover:bg-primary-dull/90 transition-all shadow-sm hover:shadow-md active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer"
           >
             {uploading ? (
               <>
