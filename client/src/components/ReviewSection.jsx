@@ -150,7 +150,7 @@ const ReviewSection = ({ foodId }) => {
         <p className="text-gray-400 text-sm">Đang tải đánh giá...</p>
       ) : fetchError ? (
         <p className="text-red-400 text-sm">{fetchError}</p>
-      ) : otherReviews.length === 0 ? (
+      ) : reviews.length === 0 ? (
         <p className="text-gray-400 text-sm">
           Chưa có đánh giá nào. Hãy là người đầu tiên!
         </p>

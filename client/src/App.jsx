@@ -20,6 +20,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const Profile = lazy(() => import("./pages/Profile"));
 const PaymentReturn = lazy(() => import("./pages/PaymentReturn"));
 const TestPayment = lazy(() => import("./pages/TestPayment"));
+const RestaurantDetail = lazy(() => import("./pages/RestaurantDetail"));
 
 const Layout = lazy(() => import("./pages/layouts/Layout"));
 const Dashboard = lazy(() => import("./pages/admin/Dashboard"));
@@ -66,6 +67,7 @@ function App() {
             <Route path="/contact" element={<Contact />} />
             <Route path="/reserve" element={<Reserve />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/about/:id" element={<RestaurantDetail />} />
           </Route>
 
           <Route path="/login" element={<Login />} />
