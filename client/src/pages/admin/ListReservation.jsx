@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import toast from "react-hot-toast";
+import ConfirmModal from "../../components/admin/ConfirmModal";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const formatDate = (dateStr) =>
@@ -196,6 +197,9 @@ const ListReservation = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const PER_PAGE = 8;
 
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState(null);
+
   const sortRef = useRef(null);
 
   // ─── Fetch ─────────────────────────────────────────────────────────────────
@@ -282,17 +286,29 @@ const ListReservation = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Bạn có chắc muốn xoá đặt bàn này?")) return;
+  const handleDelete = (id) => {
+    setSelectedId(id);
+    setConfirmOpen(true);
+  };
+
+  const handleCloseConfirm = () => {
+    setConfirmOpen(false);
+    setSelectedId(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedId) return;
     try {
       await axios.delete(
-        `${import.meta.env.VITE_API_URL}/api/reservations/${id}`,
+        `${import.meta.env.VITE_API_URL}/api/reservations/${selectedId}`,
       );
-      setReservations((prev) => prev.filter((r) => r._id !== id));
-      if (selected?._id === id) setSelected(null);
+      setReservations((prev) => prev.filter((r) => r._id !== selectedId));
+      if (selected?._id === selectedId) setSelected(null);
       toast.success("Đã xoá đặt bàn.");
     } catch (err) {
       toast.error(err.response?.data?.message || "Xoá thất bại.");
+    } finally {
+      handleCloseConfirm();
     }
   };
 
@@ -649,6 +665,14 @@ const ListReservation = () => {
           updating={updating}
         />
       )}
+
+      <ConfirmModal
+        open={confirmOpen}
+        onClose={handleCloseConfirm}
+        onConfirm={handleConfirmDelete}
+        title="Xóa đặt bàn"
+        description="Bạn có chắc chắn muốn xóa đặt bàn này không? Hành động này không thể hoàn tác."
+      />
     </div>
   );
 };

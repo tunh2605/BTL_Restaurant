@@ -487,7 +487,12 @@ const Profile = () => {
                         </p>
                       </div>
                       <p className="text-lg font-bold text-primary-dull shrink-0">
-                        {order.totalPrice.toLocaleString()}đ
+                        {(
+                          order.finalPrice ??
+                          order.totalPrice ??
+                          0
+                        ).toLocaleString()}
+                        đ
                       </p>
                     </div>
 

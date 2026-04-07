@@ -17,9 +17,12 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import toast from "react-hot-toast";
+import ConfirmModal from "../../components/admin/ConfirmModal";
 
 const formatVND = (amount) =>
-  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(amount);
+  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
+    amount,
+  );
 
 // ─── Avatar ───────────────────────────────────────────────────────────────────
 const UserAvatar = ({ user, size = "md" }) => {
@@ -38,7 +41,12 @@ const UserAvatar = ({ user, size = "md" }) => {
     );
   }
   const colors = [
-    "#C8714A", "#f59e0b", "#3b82f6", "#22c55e", "#8b5cf6", "#ec4899",
+    "#C8714A",
+    "#f59e0b",
+    "#3b82f6",
+    "#22c55e",
+    "#8b5cf6",
+    "#ec4899",
   ];
   const color = colors[(user.name || "U").charCodeAt(0) % colors.length];
   return (
@@ -67,7 +75,9 @@ const UserDetailModal = ({ user, onClose, onRoleChange, updating }) => {
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#f0e4d8]">
-          <h3 className="font-bold text-[#3a2010] text-base">Chi tiết người dùng</h3>
+          <h3 className="font-bold text-[#3a2010] text-base">
+            Chi tiết người dùng
+          </h3>
           <button
             onClick={onClose}
             className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#f5ede3] text-[#a08060] transition-colors"
@@ -107,14 +117,25 @@ const UserDetailModal = ({ user, onClose, onRoleChange, updating }) => {
           {/* Stats */}
           <div className="grid grid-cols-2 gap-3">
             {[
-              { label: "Đặt bàn", value: user.reservationCount ?? 0, color: "#3b82f6" },
-              { label: "Ngày tham gia", value: new Date(user.createdAt).toLocaleDateString("vi-VN"), color: "#22c55e", small: true },
+              {
+                label: "Đặt bàn",
+                value: user.reservationCount ?? 0,
+                color: "#3b82f6",
+              },
+              {
+                label: "Ngày tham gia",
+                value: new Date(user.createdAt).toLocaleDateString("vi-VN"),
+                color: "#22c55e",
+                small: true,
+              },
             ].map((stat) => (
               <div
                 key={stat.label}
                 className="bg-[#fdf8f5] rounded-xl px-3 py-3 text-center"
               >
-                <p className={`font-bold text-[#3a2010] ${stat.small ? "text-sm" : "text-xl"}`}>
+                <p
+                  className={`font-bold text-[#3a2010] ${stat.small ? "text-sm" : "text-xl"}`}
+                >
                   {stat.value}
                 </p>
                 <p className="text-xs text-[#a08060] mt-0.5">{stat.label}</p>
@@ -171,6 +192,9 @@ const ListUser = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const PER_PAGE = 8;
 
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState(null);
+
   const sortRef = useRef(null);
 
   // ─── Fetch users ──────────────────────────────────────────────────────────
@@ -178,7 +202,7 @@ const ListUser = () => {
     setLoading(true);
     try {
       const { data } = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/admin/users`
+        `${import.meta.env.VITE_API_URL}/api/admin/users`,
       );
       setUsers(data);
     } catch (err) {
@@ -207,7 +231,9 @@ const ListUser = () => {
   const newThisMonth = users.filter((u) => {
     const d = new Date(u.createdAt);
     const now = new Date();
-    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    return (
+      d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+    );
   }).length;
 
   const filtered = users
@@ -225,8 +251,10 @@ const ListUser = () => {
         return new Date(b.createdAt) - new Date(a.createdAt);
       if (sortBy === "created_asc")
         return new Date(a.createdAt) - new Date(b.createdAt);
-      if (sortBy === "name_asc") return (a.name || "").localeCompare(b.name || "", "vi");
-      if (sortBy === "name_desc") return (b.name || "").localeCompare(a.name || "", "vi");
+      if (sortBy === "name_asc")
+        return (a.name || "").localeCompare(b.name || "", "vi");
+      if (sortBy === "name_desc")
+        return (b.name || "").localeCompare(a.name || "", "vi");
       if (sortBy === "reservations_desc")
         return (b.reservationCount || 0) - (a.reservationCount || 0);
       return 0;
@@ -235,7 +263,7 @@ const ListUser = () => {
   const totalPages = Math.ceil(filtered.length / PER_PAGE);
   const paginated = filtered.slice(
     (currentPage - 1) * PER_PAGE,
-    currentPage * PER_PAGE
+    currentPage * PER_PAGE,
   );
 
   // ─── Handlers ─────────────────────────────────────────────────────────────
@@ -244,13 +272,13 @@ const ListUser = () => {
     try {
       const { data } = await axios.put(
         `${import.meta.env.VITE_API_URL}/api/admin/users/${id}/role`,
-        { role: newRole }
+        { role: newRole },
       );
       setUsers((prev) =>
-        prev.map((u) => (u._id === id ? { ...u, role: data.user.role } : u))
+        prev.map((u) => (u._id === id ? { ...u, role: data.user.role } : u)),
       );
       setSelectedUser((prev) =>
-        prev?._id === id ? { ...prev, role: data.user.role } : prev
+        prev?._id === id ? { ...prev, role: data.user.role } : prev,
       );
       toast.success("Cập nhật vai trò thành công.");
     } catch (err) {
@@ -260,16 +288,29 @@ const ListUser = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Bạn có chắc muốn xoá người dùng này?")) return;
+  const handleDelete = (id) => {
+    setSelectedId(id);
+    setConfirmOpen(true);
+  };
+
+  const handleCloseConfirm = () => {
+    setConfirmOpen(false);
+    setSelectedId(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedId) return;
     try {
       await axios.delete(
-        `${import.meta.env.VITE_API_URL}/api/admin/users/${id}`
+        `${import.meta.env.VITE_API_URL}/api/admin/users/${selectedId}`,
       );
-      setUsers((prev) => prev.filter((u) => u._id !== id));
+      setUsers((prev) => prev.filter((u) => u._id !== selectedId));
+      if (selectedUser?._id === selectedId) setSelectedUser(null);
       toast.success("Đã xoá người dùng.");
     } catch (err) {
       toast.error(err.response?.data?.message || "Xoá thất bại.");
+    } finally {
+      handleCloseConfirm();
     }
   };
 
@@ -304,7 +345,9 @@ const ListUser = () => {
           disabled={loading}
           className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#e8d8c8] bg-white text-[#7a6050] hover:bg-[#fdf8f5] transition-colors text-sm disabled:opacity-50"
         >
-          <RefreshCw className={`w-4 h-4 text-[#C8714A] ${loading ? "animate-spin" : ""}`} />
+          <RefreshCw
+            className={`w-4 h-4 text-[#C8714A] ${loading ? "animate-spin" : ""}`}
+          />
           Làm mới
         </button>
       </div>
@@ -475,14 +518,20 @@ const ListUser = () => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-14 text-[#b09070] text-sm">
+                  <td
+                    colSpan={6}
+                    className="text-center py-14 text-[#b09070] text-sm"
+                  >
                     <RefreshCw className="w-6 h-6 mx-auto mb-2 text-[#C8714A] animate-spin" />
                     Đang tải dữ liệu...
                   </td>
                 </tr>
               ) : paginated.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-14 text-[#b09070] text-sm">
+                  <td
+                    colSpan={6}
+                    className="text-center py-14 text-[#b09070] text-sm"
+                  >
                     <AlertCircle className="w-8 h-8 mx-auto mb-2 text-[#e0caba]" />
                     Không tìm thấy người dùng nào
                   </td>
@@ -565,7 +614,8 @@ const ListUser = () => {
           <div className="flex items-center justify-between px-5 py-4 border-t border-[#f0e4d8]">
             <p className="text-xs text-[#b09070]">
               {(currentPage - 1) * PER_PAGE + 1}–
-              {Math.min(currentPage * PER_PAGE, filtered.length)} / {filtered.length} người dùng
+              {Math.min(currentPage * PER_PAGE, filtered.length)} /{" "}
+              {filtered.length} người dùng
             </p>
             <div className="flex items-center gap-1">
               <button
@@ -589,7 +639,9 @@ const ListUser = () => {
                 </button>
               ))}
               <button
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(totalPages, p + 1))
+                }
                 disabled={currentPage === totalPages}
                 className="px-3 py-1.5 text-xs rounded-xl border border-[#e8d8c8] text-[#7a6050] hover:bg-[#fdf8f5] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
@@ -609,6 +661,14 @@ const ListUser = () => {
           updating={updating}
         />
       )}
+
+      <ConfirmModal
+        open={confirmOpen}
+        onClose={handleCloseConfirm}
+        onConfirm={handleConfirmDelete}
+        title="Xóa người dùng"
+        description="Bạn có chắc chắn muốn xóa người dùng này không? Hành động này không thể hoàn tác."
+      />
     </div>
   );
 };

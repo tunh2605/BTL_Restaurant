@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ShoppingCart,
@@ -31,6 +31,128 @@ const Cart = () => {
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const [promotions, setPromotions] = useState([]);
+  const [selectedPromotion, setSelectedPromotion] = useState(null);
+  const [discount, setDiscount] = useState(0);
+
+  // Lấy restaurantId đầu tiên (giỏ hàng chỉ hỗ trợ 1 chi nhánh)
+  const restaurantId = cartItems[0]?.restaurantId || null;
+
+  useEffect(() => {
+    const fetchPromotions = async () => {
+      try {
+        const res = await axios.get(
+          `${API}/api/promotions/available?restaurantId=${restaurantId}`,
+        );
+        setPromotions(res.data.data);
+      } catch (err) {
+        console.log(err);
+      }
+    };
+
+    if (restaurantId) fetchPromotions();
+  }, [restaurantId]);
+
+  useEffect(() => {
+    setSelectedPromotion(null);
+    setDiscount(0);
+  }, [cartItems]);
+
+  // hàm kiểm tra và áp dụng voucher
+  const applyPromotion = (promo) => {
+    const now = new Date();
+
+    // check active
+    if (!promo.isActive) return toast.error("Mã không hoạt động");
+
+    // check date
+    if (new Date(promo.startDate) > now || new Date(promo.endDate) < now) {
+      return toast.error("Mã đã hết hạn");
+    }
+
+    // check usage
+    if (promo.usageLimit && promo.usedCount >= promo.usageLimit) {
+      return toast.error("Mã đã hết lượt sử dụng");
+    }
+
+    // check min order
+    if (totalPrice < promo.minOrderValue) {
+      return toast.error(`Đơn tối thiểu ${promo.minOrderValue}`);
+    }
+
+    // khi người dùng nhấp lần 2 ta set về mặc định
+    if (selectedPromotion?._id === promo._id) {
+      setSelectedPromotion(null);
+      setDiscount(0);
+      return;
+    }
+
+    let discountAmount = 0;
+
+    // case mã giảm giá cho order
+    if (promo.type === "order") {
+      if (promo.discountType === "percent") {
+        discountAmount = (totalPrice * promo.discountValue) / 100;
+
+        if (promo.maxDiscount) {
+          discountAmount = Math.min(discountAmount, promo.maxDiscount);
+        }
+      } else {
+        discountAmount = promo.discountValue;
+      }
+    }
+
+    // case mã giảm giá cho food
+    if (promo.type === "food") {
+      let applicableTotal = 0;
+
+      console.log("promo.foods:", JSON.stringify(promo.foods));
+      console.log(
+        "cartItems foodIds:",
+        cartItems.map((i) => i.foodId),
+      );
+
+      cartItems.forEach((item) => {
+        promo.foods?.forEach((pf) => {
+          console.log(
+            "so sánh:",
+            String(pf.food?._id ?? pf.food),
+            "vs",
+            String(item.foodId),
+          );
+        });
+      });
+
+      cartItems.forEach((item) => {
+        const isValid = promo.foods?.some(
+          (pf) => String(pf.food._id) === String(item.foodId),
+        );
+        if (isValid) {
+          applicableTotal += item.price * item.quantity;
+        }
+      });
+
+      if (applicableTotal === 0) {
+        return toast.error("Không có món phù hợp");
+      }
+
+      if (promo.discountType === "percent") {
+        discountAmount = (applicableTotal * promo.discountValue) / 100;
+
+        if (promo.maxDiscount) {
+          discountAmount = Math.min(discountAmount, promo.maxDiscount);
+        }
+      } else {
+        discountAmount = Math.min(promo.discountValue, applicableTotal);
+      }
+    }
+
+    setSelectedPromotion(promo);
+    setDiscount(discountAmount);
+
+    toast.success("Áp dụng mã thành công !");
+  };
+
   // Nhóm items theo restaurant
   const grouped = cartItems.reduce((acc, item) => {
     const key = item.restaurantId || "none";
@@ -46,9 +168,6 @@ const Cart = () => {
   }, {});
 
   const groupedList = Object.values(grouped);
-
-  // Lấy restaurantId đầu tiên (giỏ hàng chỉ hỗ trợ 1 chi nhánh)
-  const restaurantId = cartItems[0]?.restaurantId || null;
 
   const handleCheckout = async () => {
     if (!isLoggedIn) {
@@ -68,7 +187,9 @@ const Cart = () => {
           name: i.name,
           price: i.price,
           quantity: i.quantity,
+          discountAmount: discount,
         })),
+        promotionId: selectedPromotion?._id ?? null,
         note,
         paymentMethod,
       });
@@ -292,11 +413,51 @@ const Cart = () => {
                   </div>
                 ))}
               </div>
-              <div className="border-t border-gray-100 pt-3 flex justify-between items-center">
-                <span className="font-semibold text-gray-700">Tổng cộng</span>
-                <span className="text-xl font-bold text-primary-dull">
-                  {totalPrice.toLocaleString("vi-VN")}đ
-                </span>
+              <div className="border-t pt-3 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Tạm tính</span>
+                  <span>{totalPrice.toLocaleString()}đ</span>
+                </div>
+
+                {discount > 0 && (
+                  <div className="flex justify-between text-sm text-green-600">
+                    <span>Giảm giá</span>
+                    <span>-{discount.toLocaleString()}đ</span>
+                  </div>
+                )}
+
+                <div className="flex justify-between font-bold text-lg">
+                  <span>Tổng</span>
+                  <span>{(totalPrice - discount).toLocaleString()}đ</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Chọn mã giảm giá*/}
+            <div className="bg-white rounded-3xl shadow-sm p-6">
+              <h3 className="font-bold text-gray-800 text-lg mb-4">
+                Mã giảm giá
+              </h3>
+
+              <div className="space-y-2 max-h-40 overflow-y-auto">
+                {promotions.map((p) => (
+                  <button
+                    key={p._id}
+                    onClick={() => applyPromotion(p)}
+                    className={`w-full text-left p-3 rounded-xl border ${
+                      selectedPromotion?._id === p._id
+                        ? "border-primary-dull bg-primary/10"
+                        : "border-gray-100 hover:border-primary/30"
+                    }`}
+                  >
+                    <p className="font-semibold text-sm">{p.name}</p>
+                    <p className="text-xs text-gray-400">
+                      {p.discountType === "percent"
+                        ? `-${p.discountValue}%`
+                        : `-${p.discountValue.toLocaleString()}đ`}
+                    </p>
+                  </button>
+                ))}
               </div>
             </div>
 

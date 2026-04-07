@@ -16,6 +16,7 @@ import orderRoutes from "./routes/orderRoutes.js";
 import reviewRouter from "./routes/reviewRoutes.js";
 import paymentRouter from "./routes/paymentRoutes.js";
 import notificationRouter from "./routes/notificationRoutes.js";
+import promotionRouter from "./routes/promotionRoutes.js";
 import "./configs/cloudinary.js";
 
 const app = express();
@@ -69,6 +70,7 @@ app.use("/api/restaurants", restaurantRouter);
 app.use("/api/cart", cartRouter);
 app.use("/api/orders", orderRoutes);
 app.use("/api/reviews", reviewRouter);
+app.use("/api/promotions", promotionRouter);
 
 // VNPay ReturnUrl proxy — redirect params sang FE
 app.get("/payment/return", (req, res) => {

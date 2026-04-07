@@ -16,11 +16,13 @@ import axios from "axios";
 import ConfirmModal from "../../components/admin/ConfirmModal.jsx";
 import { useFood } from "../../context/FoodContext.jsx";
 import toast from "react-hot-toast";
+import EditRestaurantModal from "../../components/admin/EditRestaurantModal.jsx";
 
 // ── RestaurantCard ─────────────────────────────────────────
 const RestaurantCard = ({ restaurant, index }) => {
   const [openDelete, setOpenDelete] = useState(false);
   const { fetchRestaurants, fetchStats } = useFood();
+  const [openEdit, setOpenEdit] = useState(false);
   const handleDelete = async () => {
     try {
       await axios.delete(
@@ -92,7 +94,10 @@ const RestaurantCard = ({ restaurant, index }) => {
 
           {/* Actions */}
           <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-            <button className="text-sm font-semibold text-primary-dull hover:text-primary-dull/70 transition-colors flex items-center gap-1.5">
+            <button
+              onClick={() => setOpenEdit(true)}
+              className="text-sm font-semibold text-primary-dull hover:text-primary-dull/70 transition-colors flex items-center gap-1.5 cursor-pointer"
+            >
               <Pencil className="w-3.5 h-3.5" />
               Chỉnh sửa
             </button>
@@ -112,6 +117,12 @@ const RestaurantCard = ({ restaurant, index }) => {
         onClose={() => setOpenDelete(false)}
         title={"Xóa cơ sở " + restaurant.name}
         onConfirm={() => handleDelete()}
+      />
+
+      <EditRestaurantModal
+        open={openEdit}
+        onClose={() => setOpenEdit(false)}
+        restaurant={restaurant}
       />
     </>
   );

@@ -1,33 +1,103 @@
 import Order from "../models/Order.js";
 import OrderItem from "../models/OrderItem.js";
 import AdminNotification from "../models/AdminNotification.js";
+import Promotion from "../models/Promotion.js";
+import PromotionFood from "../models/PromotionFood.js";
 
 // ─── USER: Tạo đơn hàng mới ──────────────────────────────────────────────────
 export const createOrder = async (req, res) => {
   try {
-    const { restaurantId, items, note, paymentMethod } = req.body;
-    // items: [{ foodId, name, price, quantity }]
+    const { restaurantId, items, note, paymentMethod, promotionId } = req.body;
 
-    if (!items || items.length === 0) {
+    if (!items || items.length === 0)
       return res.status(400).json({ message: "Giỏ hàng trống." });
-    }
 
     const totalPrice = items.reduce(
       (sum, item) => sum + item.price * item.quantity,
       0,
     );
 
+    // validate cho khuyến mãi
+    let discount = 0;
+    let promotionData = null;
+    let promoToSave = null;
+
+    if (promotionId) {
+      const promo = await Promotion.findById(promotionId);
+
+      if (!promo || !promo.isActive)
+        return res.status(400).json({ message: "Mã không hợp lệ." });
+
+      const now = new Date();
+      if (promo.startDate > now || promo.endDate < now)
+        return res.status(400).json({ message: "Mã đã hết hạn." });
+      if (promo.usageLimit && promo.usedCount >= promo.usageLimit)
+        return res.status(400).json({ message: "Mã đã hết lượt." });
+      if (totalPrice < promo.minOrderValue)
+        return res
+          .status(400)
+          .json({ message: `Đơn tối thiểu ${promo.minOrderValue}đ` });
+
+      // xử lí giá cho đơn hàng và món ăn
+      if (promo.type === "order") {
+        if (promo.discountType === "percent") {
+          discount = (totalPrice * promo.discountValue) / 100;
+          if (promo.maxDiscount)
+            discount = Math.min(discount, promo.maxDiscount);
+        } else {
+          discount = Math.min(promo.discountValue, totalPrice);
+        }
+      }
+
+      if (promo.type === "food") {
+        const promotionFoods = await PromotionFood.find({
+          promotion: promo._id,
+        });
+        let applicableTotal = 0;
+        items.forEach((item) => {
+          const matched = promotionFoods.some(
+            (pf) => String(pf.food) === String(item.foodId),
+          );
+          if (matched) applicableTotal += item.price * item.quantity;
+        });
+
+        if (applicableTotal > 0) {
+          if (promo.discountType === "percent") {
+            discount = (applicableTotal * promo.discountValue) / 100;
+            if (promo.maxDiscount)
+              discount = Math.min(discount, promo.maxDiscount);
+          } else {
+            discount = Math.min(promo.discountValue, applicableTotal);
+          }
+        }
+      }
+
+      promotionData = {
+        promotionId: promo._id,
+        name: promo.name,
+        discountType: promo.discountType,
+        discountValue: promo.discountValue,
+      };
+
+      promoToSave = promo;
+    }
+
+    const finalPrice = totalPrice - discount;
+
+    // logic đơn hàng
     const order = await Order.create({
       user: req.user.id,
       restaurant: restaurantId || null,
       totalPrice,
+      discount,
+      finalPrice,
+      promotion: promotionData,
       note: note || "",
       paymentMethod: paymentMethod || "online",
       status: "pending",
       isPaid: false,
     });
 
-    // Tạo các OrderItem
     const orderItems = items.map((item) => ({
       order: order._id,
       food: item.foodId,
@@ -35,13 +105,19 @@ export const createOrder = async (req, res) => {
       price: item.price,
       quantity: item.quantity,
     }));
+
     await OrderItem.insertMany(orderItems);
 
-    // Tạo notification cho admin
+    // Chỉ tăng usedCount của khuyến mãi sau khi tạo đơn hàng thành công
+    if (promoToSave) {
+      promoToSave.usedCount += 1;
+      await promoToSave.save();
+    }
+
     await AdminNotification.create({
       type: "new_order",
       title: "Đơn hàng mới",
-      message: `Khách hàng vừa đặt đơn hàng #${order._id} trị giá ${totalPrice.toLocaleString("vi-VN")}đ`,
+      message: `Đơn #${order._id} - ${finalPrice.toLocaleString("vi-VN")}đ`,
       restaurant: restaurantId || null,
       refType: "Order",
       refId: order._id,
@@ -49,7 +125,7 @@ export const createOrder = async (req, res) => {
 
     res.status(201).json({ message: "Tạo đơn hàng thành công.", order });
   } catch (err) {
-    console.log(err);
+    console.error(err);
     res.status(500).json({ message: "Lỗi server.", error: err.message });
   }
 };
@@ -102,7 +178,11 @@ export const updateOrderStatus = async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
 
-    const order = await Order.findByIdAndUpdate(id, { status }, { new: true });
+    const order = await Order.findByIdAndUpdate(
+      id,
+      { status },
+      { returnDocument: "after" },
+    );
 
     if (!order)
       return res.status(404).json({ message: "Không tìm thấy đơn hàng." });

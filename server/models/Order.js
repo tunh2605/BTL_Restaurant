@@ -11,7 +11,21 @@ const orderSchema = new mongoose.Schema({
     ref: "Restaurant",
   },
 
-  totalPrice: Number,
+  totalPrice: Number, // giá gốc
+  discount: { type: Number, default: 0 }, // số tiền giảm
+  finalPrice: Number, // giá sau giảm
+
+  promotion: {
+    promotionId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Promotion",
+      default: null,
+    },
+    name: String,
+    discountType: String, // percent | fixed
+    discountValue: Number,
+  },
+
   note: String,
 
   status: {

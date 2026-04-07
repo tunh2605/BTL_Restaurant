@@ -77,7 +77,7 @@ export const updateRestaurant = async (req, res) => {
   const { id } = req.params;
   try {
     const restaurant = await Restaurant.findByIdAndUpdate(id, req.body, {
-      new: true,
+      returnDocument: "after",
       runValidators: true,
     });
     if (!restaurant) {
