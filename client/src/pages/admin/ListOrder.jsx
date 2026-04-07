@@ -407,6 +407,7 @@ const ListOrder = () => {
                     "Món",
                     "Ngày",
                     "Phương thức",
+                    "Giảm giá",
                     "Tổng tiền",
                     "Trạng thái",
                     "",
@@ -472,6 +473,17 @@ const ListOrder = () => {
                           order.paymentMethod ||
                           "—"}
                       </span>
+                    </td>
+
+                    {/* Giảm giá */}
+                    <td className="px-5 py-4 whitespace-nowrap">
+                      {order.discount > 0 ? (
+                        <span className="text-green-600 font-semibold">
+                          -{formatVND(order.discount)}
+                        </span>
+                      ) : (
+                        <span className="text-[#c0a890]">—</span>
+                      )}
                     </td>
 
                     {/* Tổng tiền */}

@@ -32,11 +32,14 @@ export const createVNPayUrl = async (req, res) => {
     const txnRef = `${Date.now()}${orderId.toString().slice(-6)}`;
 
     // Tạo bản ghi Payment trạng thái pending
+    // Dùng finalPrice (sau giảm giá) nếu có, fallback về totalPrice
+    const chargeAmount = order.finalPrice ?? order.totalPrice;
+
     const payment = await Payment.create({
       order: orderId,
       user: req.user.id,
       restaurant: order.restaurant,
-      amount: order.totalPrice,
+      amount: chargeAmount,
       method: "vnpay",
       status: "pending",
       txnRef,
@@ -48,7 +51,7 @@ export const createVNPayUrl = async (req, res) => {
       "127.0.0.1";
 
     const paymentUrl = vnpay.buildPaymentUrl({
-      vnp_Amount: order.totalPrice,
+      vnp_Amount: chargeAmount,
       vnp_IpAddr: clientIp,
       vnp_ReturnUrl: process.env.VNPAY_RETURN_URL || `${process.env.FE_BASE_URL}/payment/return`,
       vnp_TxnRef: txnRef,
