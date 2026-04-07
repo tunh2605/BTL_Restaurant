@@ -106,23 +106,6 @@ const Cart = () => {
     if (promo.type === "food") {
       let applicableTotal = 0;
 
-      console.log("promo.foods:", JSON.stringify(promo.foods));
-      console.log(
-        "cartItems foodIds:",
-        cartItems.map((i) => i.foodId),
-      );
-
-      cartItems.forEach((item) => {
-        promo.foods?.forEach((pf) => {
-          console.log(
-            "so sánh:",
-            String(pf.food?._id ?? pf.food),
-            "vs",
-            String(item.foodId),
-          );
-        });
-      });
-
       cartItems.forEach((item) => {
         const isValid = promo.foods?.some(
           (pf) => String(pf.food._id) === String(item.foodId),

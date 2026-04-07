@@ -2,8 +2,6 @@ import { CircleAlert, ShoppingCart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const FoodCard = ({ food }) => {
-  console.log("food:", food);
-  console.log("category:", food.category);
   const navigate = useNavigate();
   const categorySlug = food.category?.slug;
   return (
