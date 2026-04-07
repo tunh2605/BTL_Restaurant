@@ -179,36 +179,41 @@ const Cart = () => {
 
     setLoading(true);
     try {
-      // 1. Tạo đơn hàng
-      const orderRes = await axios.post(`${API}/api/orders`, {
-        restaurantId,
-        items: cartItems.map((i) => ({
-          foodId: i.foodId,
-          name: i.name,
-          price: i.price,
-          quantity: i.quantity,
-          discountAmount: discount,
-        })),
-        promotionId: selectedPromotion?._id ?? null,
-        note,
-        paymentMethod,
-      });
-
-      const orderId = orderRes.data.order._id;
-
       if (paymentMethod === "vnpay") {
-        // 2. Tạo URL thanh toán VNPay
-        const payRes = await axios.post(`${API}/api/payments/create-url`, {
-          orderId,
-        });
-        // 3. Redirect sang VNPay
+        // Gửi toàn bộ cart data lên server để tạo VNPay URL
+        // Order sẽ được tạo SAU KHI thanh toán thành công
+        const payRes = await axios.post(
+          `${API}/api/payments/create-url`,
+          {
+            restaurantId,
+            items: cartItems.map((i) => ({
+              foodId: i.foodId,
+              name: i.name,
+              price: i.price,
+              quantity: i.quantity,
+            })),
+            promotionId: selectedPromotion?._id ?? null,
+            note,
+          },
+        );
+        // Redirect sang VNPay — cart sẽ được clear sau khi verify thành công
         window.location.href = payRes.data.paymentUrl;
       } else {
-        // Thanh toán tiền mặt
+        // Thanh toán tiền mặt — tạo order ngay
+        await axios.post(`${API}/api/orders`, {
+          restaurantId,
+          items: cartItems.map((i) => ({
+            foodId: i.foodId,
+            name: i.name,
+            price: i.price,
+            quantity: i.quantity,
+          })),
+          promotionId: selectedPromotion?._id ?? null,
+          note,
+          paymentMethod: "cash",
+        });
         clearCart();
-        toast.success(
-          "Đặt hàng thành công! Vui lòng thanh toán khi nhận hàng.",
-        );
+        toast.success("Đặt hàng thành công! Vui lòng thanh toán khi nhận hàng.");
         navigate("/profile");
       }
     } catch (err) {

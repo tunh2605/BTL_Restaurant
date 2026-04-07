@@ -5,7 +5,7 @@ const paymentSchema = new mongoose.Schema(
     order: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Order",
-      required: true,
+      default: null,
     },
     user: {
       type: mongoose.Schema.Types.ObjectId,
@@ -48,6 +48,11 @@ const paymentSchema = new mongoose.Schema(
     },
     paidAt: {
       type: Date,
+      default: null,
+    },
+    // Snapshot giỏ hàng để tạo order sau khi thanh toán thành công
+    cartSnapshot: {
+      type: mongoose.Schema.Types.Mixed,
       default: null,
     },
   },

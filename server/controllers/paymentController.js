@@ -1,7 +1,10 @@
 import { VNPay, ProductCode, VnpLocale, dateFormat, ignoreLogger } from "vnpay";
 import Payment from "../models/Payment.js";
 import Order from "../models/Order.js";
+import OrderItem from "../models/OrderItem.js";
 import AdminNotification from "../models/AdminNotification.js";
+import Promotion from "../models/Promotion.js";
+import PromotionFood from "../models/PromotionFood.js";
 
 const vnpay = new VNPay({
   tmnCode: process.env.VNPAY_TMN_CODE,
@@ -20,29 +23,98 @@ const getVNPayExpireDate = () => {
   return dateFormat(now);
 };
 
-// ─── Tạo URL thanh toán VNPay ─────────────────────────────────────────────────
+// ─── Tạo URL thanh toán VNPay (CHƯA tạo order) ───────────────────────────────
 export const createVNPayUrl = async (req, res) => {
   try {
-    const { orderId } = req.body;
+    const { restaurantId, items, note, promotionId } = req.body;
 
-    const order = await Order.findById(orderId);
-    if (!order) return res.status(404).json({ message: "Không tìm thấy đơn hàng." });
+    if (!items || items.length === 0)
+      return res.status(400).json({ message: "Giỏ hàng trống." });
 
-    // Tạo txnRef duy nhất — VNPay chỉ chấp nhận [a-zA-Z0-9], không có dấu gạch ngang
-    const txnRef = `${Date.now()}${orderId.toString().slice(-6)}`;
+    // Tính tổng tiền gốc
+    const totalPrice = items.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0,
+    );
 
-    // Tạo bản ghi Payment trạng thái pending
-    // Dùng finalPrice (sau giảm giá) nếu có, fallback về totalPrice
-    const chargeAmount = order.finalPrice ?? order.totalPrice;
+    // Validate promotion và tính discount (giống createOrder)
+    let discount = 0;
+    let promotionData = null;
 
+    if (promotionId) {
+      const promo = await Promotion.findById(promotionId);
+
+      if (!promo || !promo.isActive)
+        return res.status(400).json({ message: "Mã không hợp lệ." });
+
+      const now = new Date();
+      if (promo.startDate > now || promo.endDate < now)
+        return res.status(400).json({ message: "Mã đã hết hạn." });
+      if (promo.usageLimit && promo.usedCount >= promo.usageLimit)
+        return res.status(400).json({ message: "Mã đã hết lượt." });
+      if (totalPrice < promo.minOrderValue)
+        return res.status(400).json({ message: `Đơn tối thiểu ${promo.minOrderValue}đ` });
+
+      if (promo.type === "order") {
+        if (promo.discountType === "percent") {
+          discount = (totalPrice * promo.discountValue) / 100;
+          if (promo.maxDiscount) discount = Math.min(discount, promo.maxDiscount);
+        } else {
+          discount = Math.min(promo.discountValue, totalPrice);
+        }
+      }
+
+      if (promo.type === "food") {
+        const promotionFoods = await PromotionFood.find({ promotion: promo._id });
+        let applicableTotal = 0;
+        items.forEach((item) => {
+          const matched = promotionFoods.some(
+            (pf) => String(pf.food) === String(item.foodId),
+          );
+          if (matched) applicableTotal += item.price * item.quantity;
+        });
+        if (applicableTotal > 0) {
+          if (promo.discountType === "percent") {
+            discount = (applicableTotal * promo.discountValue) / 100;
+            if (promo.maxDiscount) discount = Math.min(discount, promo.maxDiscount);
+          } else {
+            discount = Math.min(promo.discountValue, applicableTotal);
+          }
+        }
+      }
+
+      promotionData = {
+        promotionId: promo._id,
+        name: promo.name,
+        discountType: promo.discountType,
+        discountValue: promo.discountValue,
+      };
+    }
+
+    const finalPrice = totalPrice - discount;
+
+    // Tạo txnRef duy nhất
+    const txnRef = `${Date.now()}${req.user.id.toString().slice(-6)}`;
+
+    // Lưu Payment pending — chưa có order, lưu snapshot giỏ hàng để dùng sau
     const payment = await Payment.create({
-      order: orderId,
+      order: null,
       user: req.user.id,
-      restaurant: order.restaurant,
-      amount: chargeAmount,
+      restaurant: restaurantId || null,
+      amount: finalPrice,
       method: "vnpay",
       status: "pending",
       txnRef,
+      cartSnapshot: {
+        restaurantId,
+        items,
+        note: note || "",
+        promotionId: promotionId || null,
+        totalPrice,
+        discount,
+        finalPrice,
+        promotionData,
+      },
     });
 
     const clientIp =
@@ -51,7 +123,7 @@ export const createVNPayUrl = async (req, res) => {
       "127.0.0.1";
 
     const paymentUrl = vnpay.buildPaymentUrl({
-      vnp_Amount: chargeAmount,
+      vnp_Amount: finalPrice,
       vnp_IpAddr: clientIp,
       vnp_ReturnUrl: process.env.VNPAY_RETURN_URL || `${process.env.FE_BASE_URL}/payment/return`,
       vnp_TxnRef: txnRef,
@@ -83,7 +155,7 @@ export const verifyReturn = async (req, res) => {
     }
 
     if (verify.isSuccess) {
-      // Guard: nếu đã xử lý rồi (IPN về trước) thì không tạo noti lần nữa
+      // Guard: nếu đã xử lý rồi (IPN về trước) thì không tạo order lần nữa
       const alreadySuccess = payment.status === "success";
 
       // Cập nhật Payment
@@ -91,12 +163,58 @@ export const verifyReturn = async (req, res) => {
       payment.transactionId = transactionId;
       payment.gatewayResponse = vnpParams;
       payment.paidAt = new Date();
+
+      // Tạo order từ cartSnapshot nếu chưa có
+      if (!alreadySuccess && !payment.order) {
+        const snap = payment.cartSnapshot;
+
+        // Tạo order với status completed + isPaid true
+        const order = await Order.create({
+          user: payment.user,
+          restaurant: snap.restaurantId || null,
+          totalPrice: snap.totalPrice,
+          discount: snap.discount,
+          finalPrice: snap.finalPrice,
+          promotion: snap.promotionData || null,
+          note: snap.note || "",
+          paymentMethod: "vnpay",
+          status: "completed",
+          isPaid: true,
+        });
+
+        // Tạo order items
+        const orderItems = snap.items.map((item) => ({
+          order: order._id,
+          food: item.foodId,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+        }));
+        await OrderItem.insertMany(orderItems);
+
+        // Tăng usedCount khuyến mãi
+        if (snap.promotionId) {
+          await Promotion.findByIdAndUpdate(snap.promotionId, {
+            $inc: { usedCount: 1 },
+          });
+        }
+
+        // Liên kết payment với order vừa tạo
+        payment.order = order._id;
+
+        await AdminNotification.create({
+          type: "new_order",
+          title: "Đơn hàng mới (VNPay)",
+          message: `Đơn #${order._id} - ${snap.finalPrice.toLocaleString("vi-VN")}đ đã thanh toán thành công`,
+          restaurant: snap.restaurantId || null,
+          refType: "Order",
+          refId: order._id,
+        });
+      }
+
       await payment.save();
 
-      // Cập nhật Order → completed
-      await Order.findByIdAndUpdate(payment.order, { isPaid: true, status: "completed" });
-
-      // Tạo notification chỉ khi chưa có (tránh duplicate nếu FE gọi 2 lần)
+      // Tạo notification payment_success nếu chưa có
       if (!alreadySuccess) {
         await AdminNotification.create({
           type: "payment_success",
@@ -110,7 +228,7 @@ export const verifyReturn = async (req, res) => {
 
       return res.json({ success: true, message: "Thanh toán thành công.", payment });
     } else {
-      // Thanh toán thất bại
+      // Thanh toán thất bại — không tạo order
       payment.status = "failed";
       payment.gatewayResponse = vnpParams;
       await payment.save();
@@ -118,7 +236,7 @@ export const verifyReturn = async (req, res) => {
       await AdminNotification.create({
         type: "payment_failed",
         title: "Thanh toán thất bại",
-        message: `Đơn hàng #${payment.order} thanh toán thất bại. Mã lỗi: ${vnpParams["vnp_ResponseCode"]}`,
+        message: `Giao dịch ${txnRef} thất bại. Mã lỗi: ${vnpParams["vnp_ResponseCode"]}`,
         restaurant: payment.restaurant,
         refType: "Payment",
         refId: payment._id,
@@ -151,9 +269,52 @@ export const vnpayIPN = async (req, res) => {
       payment.transactionId = transactionId;
       payment.gatewayResponse = vnpParams;
       payment.paidAt = new Date();
-      await payment.save();
 
-      await Order.findByIdAndUpdate(payment.order, { isPaid: true, status: "completed" });
+      // Tạo order từ cartSnapshot nếu chưa có
+      if (!payment.order) {
+        const snap = payment.cartSnapshot;
+
+        const order = await Order.create({
+          user: payment.user,
+          restaurant: snap.restaurantId || null,
+          totalPrice: snap.totalPrice,
+          discount: snap.discount,
+          finalPrice: snap.finalPrice,
+          promotion: snap.promotionData || null,
+          note: snap.note || "",
+          paymentMethod: "vnpay",
+          status: "completed",
+          isPaid: true,
+        });
+
+        const orderItems = snap.items.map((item) => ({
+          order: order._id,
+          food: item.foodId,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+        }));
+        await OrderItem.insertMany(orderItems);
+
+        if (snap.promotionId) {
+          await Promotion.findByIdAndUpdate(snap.promotionId, {
+            $inc: { usedCount: 1 },
+          });
+        }
+
+        payment.order = order._id;
+
+        await AdminNotification.create({
+          type: "new_order",
+          title: "Đơn hàng mới (VNPay)",
+          message: `Đơn #${order._id} - ${snap.finalPrice.toLocaleString("vi-VN")}đ đã thanh toán thành công`,
+          restaurant: snap.restaurantId || null,
+          refType: "Order",
+          refId: order._id,
+        });
+      }
+
+      await payment.save();
     } else {
       payment.status = "failed";
       payment.gatewayResponse = vnpParams;
