@@ -10,9 +10,11 @@ import {
   ChevronRight,
   MapPin,
   Utensils,
+  Building2,
 } from "lucide-react";
 import { BlurCircle } from "../components/BlurCircle";
 import { useAuth } from "../context/AuthContext";
+import { useFood } from "../context/FoodContext";
 import axios from "axios";
 import toast from "react-hot-toast";
 
@@ -37,10 +39,11 @@ const TIME_SLOTS = [
 
 const PARTY_SIZES = [1, 2, 3, 4, 5, 6, 7, 8];
 
-const STEPS = ["Thông tin", "Chọn ngày giờ", "Xác nhận"];
+const STEPS = ["Thông tin", "Chọn cơ sở & ngày giờ", "Xác nhận"];
 
 const Reserve = () => {
   const { user, isLoggedIn } = useAuth();
+  const { restaurants, loading: loadingRestaurants } = useFood();
 
   const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
@@ -49,6 +52,7 @@ const Reserve = () => {
   const [form, setForm] = useState({
     name: user?.name || "",
     phone: user?.phone || "",
+    restaurantId: "",
     date: "",
     time: "",
     numberOfPeople: 2,
@@ -63,7 +67,7 @@ const Reserve = () => {
 
   const canNext = () => {
     if (step === 0) return form.name.trim() && form.phone.trim();
-    if (step === 1) return form.date && form.time;
+    if (step === 1) return form.restaurantId && form.date && form.time;
     return true;
   };
 
@@ -73,6 +77,7 @@ const Reserve = () => {
       await axios.post(`${import.meta.env.VITE_API_URL}/api/reservations`, {
         name: form.name,
         phone: form.phone,
+        restaurantId: form.restaurantId,
         date: form.date,
         time: form.time,
         numberOfPeople: form.numberOfPeople,
@@ -118,6 +123,15 @@ const Reserve = () => {
               <Phone className="w-4 h-4 text-primary-dull shrink-0" />
               <span>{form.phone}</span>
             </div>
+            {form.restaurantId && (
+              <div className="flex items-center gap-3 text-sm text-gray-600">
+                <Building2 className="w-4 h-4 text-primary-dull shrink-0" />
+                <span>
+                  {restaurants.find((r) => r._id === form.restaurantId)?.name ||
+                    "—"}
+                </span>
+              </div>
+            )}
             <div className="flex items-center gap-3 text-sm text-gray-600">
               <Calendar className="w-4 h-4 text-primary-dull shrink-0" />
               <span>
@@ -145,6 +159,7 @@ const Reserve = () => {
               setForm({
                 name: user?.name || "",
                 phone: user?.phone || "",
+                restaurantId: "",
                 date: "",
                 time: "",
                 numberOfPeople: 2,
@@ -231,13 +246,12 @@ const Reserve = () => {
               <div key={i} className="flex items-center">
                 <div className="flex flex-col items-center">
                   <div
-                    className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ${
-                      i < step
-                        ? "bg-primary-dull text-white"
-                        : i === step
-                          ? "bg-primary-dull text-white ring-4 ring-primary/40"
-                          : "bg-[#E3E2E0] text-gray-400"
-                    }`}
+                    className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ${i < step
+                      ? "bg-primary-dull text-white"
+                      : i === step
+                        ? "bg-primary-dull text-white ring-4 ring-primary/40"
+                        : "bg-[#E3E2E0] text-gray-400"
+                      }`}
                   >
                     {i < step ? <CheckCircle className="w-5 h-5" /> : i + 1}
                   </div>
@@ -314,11 +328,10 @@ const Reserve = () => {
                       <button
                         key={n}
                         onClick={() => handleChange("numberOfPeople", n)}
-                        className={`py-3 rounded-2xl text-sm font-semibold transition-all duration-200 cursor-pointer ${
-                          form.numberOfPeople === n
-                            ? "bg-primary-dull text-white shadow-md"
-                            : "bg-[#F5EDE3] text-gray-600 hover:bg-primary/60"
-                        }`}
+                        className={`py-3 rounded-2xl text-sm font-semibold transition-all duration-200 cursor-pointer ${form.numberOfPeople === n
+                          ? "bg-primary-dull text-white shadow-md"
+                          : "bg-[#F5EDE3] text-gray-600 hover:bg-primary/60"
+                          }`}
                       >
                         <span className="block">{n}</span>
                         <span className="block text-xs opacity-70 mt-0.5">
@@ -347,16 +360,67 @@ const Reserve = () => {
               </div>
             )}
 
-            {/* Step 1: Chọn ngày giờ */}
+            {/* Step 1: Chọn cơ sở & ngày giờ */}
             {step === 1 && (
               <div className="space-y-6">
                 <div>
                   <h2 className="text-2xl font-bold text-gray-800 mb-1">
-                    Chọn ngày & giờ
+                    Chọn cơ sở & ngày giờ
                   </h2>
                   <p className="text-sm text-gray-400">
-                    Chọn thời gian phù hợp để chúng tôi chuẩn bị tốt nhất.
+                    Chọn cơ sở và thời gian phù hợp để chúng tôi chuẩn bị tốt nhất.
                   </p>
+                </div>
+
+                {/* Chọn cơ sở */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-3">
+                    Cơ sở <span className="text-red-400">*</span>
+                  </label>
+                  {loadingRestaurants ? (
+                    <p className="text-sm text-gray-400">Đang tải cơ sở...</p>
+                  ) : restaurants.length === 0 ? (
+                    <p className="text-sm text-red-400">Không có cơ sở nào khả dụng.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {restaurants.map((r) => (
+                        <button
+                          key={r._id}
+                          type="button"
+                          onClick={() => handleChange("restaurantId", r._id)}
+                          className={`w-full flex items-start gap-3 px-4 py-3.5 rounded-2xl text-left transition-all duration-200 cursor-pointer border-2 ${form.restaurantId === r._id
+                            ? "border-primary-dull bg-primary/10"
+                            : "border-transparent bg-[#F5EDE3] hover:border-primary/40"
+                            }`}
+                        >
+                          <Building2
+                            className={`w-5 h-5 mt-0.5 shrink-0 ${form.restaurantId === r._id
+                              ? "text-primary-dull"
+                              : "text-gray-400"
+                              }`}
+                          />
+                          <div>
+                            <p
+                              className={`text-sm font-semibold ${form.restaurantId === r._id
+                                ? "text-primary-dull"
+                                : "text-gray-700"
+                                }`}
+                            >
+                              {r.name}
+                            </p>
+                            <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
+                              <MapPin className="w-3 h-3" />
+                              {r.address}
+                            </p>
+                            <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {r.openTime} – {r.closeTime}
+                            </p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -384,11 +448,10 @@ const Reserve = () => {
                       <button
                         key={t}
                         onClick={() => handleChange("time", t)}
-                        className={`py-2.5 rounded-2xl text-sm font-semibold transition-all duration-200 cursor-pointer ${
-                          form.time === t
-                            ? "bg-primary-dull text-white shadow-md"
-                            : "bg-[#F5EDE3] text-gray-600 hover:bg-primary/60"
-                        }`}
+                        className={`py-2.5 rounded-2xl text-sm font-semibold transition-all duration-200 cursor-pointer ${form.time === t
+                          ? "bg-primary-dull text-white shadow-md"
+                          : "bg-[#F5EDE3] text-gray-600 hover:bg-primary/60"
+                          }`}
                       >
                         {t}
                       </button>
@@ -414,6 +477,13 @@ const Reserve = () => {
                   {[
                     { icon: User, label: "Khách hàng", value: form.name },
                     { icon: Phone, label: "Điện thoại", value: form.phone },
+                    {
+                      icon: Building2,
+                      label: "Cơ sở",
+                      value:
+                        restaurants.find((r) => r._id === form.restaurantId)
+                          ?.name || "—",
+                    },
                     {
                       icon: Calendar,
                       label: "Ngày",
