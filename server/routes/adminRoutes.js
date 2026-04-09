@@ -1,5 +1,5 @@
 import express from "express";
-import { verifyAdmin } from "../middleware/auth.js";
+import { verifyAdmin, verifyHQAdmin } from "../middleware/auth.js";
 import {
   getAllUsers,
   updateUserRole,
@@ -16,7 +16,7 @@ adminRouter.get("/dashboard-stats", verifyAdmin, getDashboardStats);
 // User management
 adminRouter.get("/users", verifyAdmin, getAllUsers);
 adminRouter.get("/users/stats", verifyAdmin, getUserStats);
-adminRouter.put("/users/:id/role", verifyAdmin, updateUserRole);
+adminRouter.put("/users/:id/role", verifyHQAdmin, updateUserRole);
 adminRouter.delete("/users/:id", verifyAdmin, deleteUser);
 
 export default adminRouter;

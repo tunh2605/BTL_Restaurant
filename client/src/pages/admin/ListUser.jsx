@@ -18,6 +18,7 @@ import {
 import axios from "axios";
 import toast from "react-hot-toast";
 import ConfirmModal from "../../components/admin/ConfirmModal";
+import { useAuth } from "../../context/AuthContext";
 
 const formatVND = (amount) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
@@ -60,7 +61,7 @@ const UserAvatar = ({ user, size = "md" }) => {
 };
 
 // ─── Detail Modal ─────────────────────────────────────────────────────────────
-const UserDetailModal = ({ user, onClose, onRoleChange, updating }) => {
+const UserDetailModal = ({ user, onClose, onRoleChange, updating, isHQAdmin }) => {
   if (!user) return null;
   const isAdmin = user.role === "admin";
 
@@ -99,17 +100,21 @@ const UserDetailModal = ({ user, onClose, onRoleChange, updating }) => {
               </p>
               <span
                 className={`inline-flex items-center gap-1 text-xs font-semibold mt-1 px-2 py-0.5 rounded-full ${
-                  isAdmin
+                  isHQAdmin
+                    ? "bg-amber-50 text-amber-600"
+                    : isAdmin
                     ? "bg-purple-50 text-purple-600"
                     : "bg-[#FFF3EE] text-[#C8714A]"
                 }`}
               >
-                {isAdmin ? (
+                {isHQAdmin ? (
+                  <Crown className="w-3 h-3" />
+                ) : isAdmin ? (
                   <Crown className="w-3 h-3" />
                 ) : (
                   <User className="w-3 h-3" />
                 )}
-                {isAdmin ? "Admin" : "User"}
+                {isHQAdmin ? "Root" : isAdmin ? "Admin" : "User"}
               </span>
             </div>
           </div>
@@ -143,36 +148,50 @@ const UserDetailModal = ({ user, onClose, onRoleChange, updating }) => {
             ))}
           </div>
 
-          {/* Role change */}
-          <div className="border-t border-[#f0e4d8] pt-4">
-            <p className="text-xs text-[#b09070] mb-2">Đổi vai trò</p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => onRoleChange(user._id, "user")}
-                disabled={user.role === "user" || updating}
-                className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2 rounded-xl transition-all ${
-                  user.role === "user"
-                    ? "bg-[#C8714A] text-white cursor-default"
-                    : "border border-[#e8d8c8] text-[#7a6050] hover:bg-[#fdf8f5]"
-                } disabled:opacity-50`}
-              >
-                <User className="w-3.5 h-3.5" />
-                User
-              </button>
-              <button
-                onClick={() => onRoleChange(user._id, "admin")}
-                disabled={user.role === "admin" || updating}
-                className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2 rounded-xl transition-all ${
-                  user.role === "admin"
-                    ? "bg-purple-600 text-white cursor-default"
-                    : "border border-[#e8d8c8] text-[#7a6050] hover:bg-[#fdf8f5]"
-                } disabled:opacity-50`}
-              >
-                <Crown className="w-3.5 h-3.5" />
-                Admin
-              </button>
+          {/* Role change - only for HQAdmin */}
+          {isHQAdmin && (
+            <div className="border-t border-[#f0e4d8] pt-4">
+              <p className="text-xs text-[#b09070] mb-2">Đổi vai trò</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => onRoleChange(user._id, "user")}
+                  disabled={user.role === "user" || updating}
+                  className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2 rounded-xl transition-all ${
+                    user.role === "user"
+                      ? "bg-[#C8714A] text-white cursor-default"
+                      : "border border-[#e8d8c8] text-[#7a6050] hover:bg-[#fdf8f5]"
+                  } disabled:opacity-50`}
+                >
+                  <User className="w-3.5 h-3.5" />
+                  User
+                </button>
+                <button
+                  onClick={() => onRoleChange(user._id, "admin")}
+                  disabled={user.role === "admin" || updating}
+                  className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2 rounded-xl transition-all ${
+                    user.role === "admin"
+                      ? "bg-purple-600 text-white cursor-default"
+                      : "border border-[#e8d8c8] text-[#7a6050] hover:bg-[#fdf8f5]"
+                  } disabled:opacity-50`}
+                >
+                  <Crown className="w-3.5 h-3.5" />
+                  Admin
+                </button>
+                <button
+                  onClick={() => onRoleChange(user._id, "hqadmin")}
+                  disabled={user.role === "hqadmin" || updating}
+                  className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2 rounded-xl transition-all ${
+                    user.role === "hqadmin"
+                      ? "bg-amber-500 text-white cursor-default"
+                      : "border border-[#e8d8c8] text-[#7a6050] hover:bg-[#fdf8f5]"
+                  } disabled:opacity-50`}
+                >
+                  <Crown className="w-3.5 h-3.5" />
+                  Root
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
@@ -181,6 +200,8 @@ const UserDetailModal = ({ user, onClose, onRoleChange, updating }) => {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 const ListUser = () => {
+  const { user: currentUser } = useAuth();
+  const isHQAdmin = currentUser?.role === "hqadmin";
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
@@ -227,6 +248,7 @@ const ListUser = () => {
 
   const totalUsers = users.length;
   const adminCount = users.filter((u) => u.role === "admin").length;
+  const hqadminCount = users.filter((u) => u.role === "hqadmin").length;
   const userCount = users.filter((u) => u.role === "user").length;
   const newThisMonth = users.filter((u) => {
     const d = new Date(u.createdAt);
@@ -326,6 +348,7 @@ const ListUser = () => {
     { value: "all", label: "Tất cả", count: totalUsers },
     { value: "user", label: "User", count: userCount },
     { value: "admin", label: "Admin", count: adminCount },
+    { value: "hqadmin", label: "Root", count: hqadminCount },
   ];
 
   return (
@@ -353,7 +376,7 @@ const ListUser = () => {
       </div>
 
       {/* ─── Stats Cards ─── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
           {
             label: "Tổng người dùng",
@@ -374,6 +397,13 @@ const ListUser = () => {
             value: adminCount,
             color: "#8b5cf6",
             bg: "#F5F3FF",
+            icon: Crown,
+          },
+          {
+            label: "Root",
+            value: hqadminCount,
+            color: "#f59e0b",
+            bg: "#FFFBEB",
             icon: Crown,
           },
           {
@@ -562,17 +592,21 @@ const ListUser = () => {
                     <td className="py-3.5 px-4">
                       <span
                         className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full ${
-                          u.role === "admin"
+                          u.role === "hqadmin"
+                            ? "bg-amber-50 text-amber-600"
+                            : u.role === "admin"
                             ? "bg-purple-50 text-purple-600"
                             : "bg-[#FFF3EE] text-[#C8714A]"
                         }`}
                       >
-                        {u.role === "admin" ? (
+                        {u.role === "hqadmin" ? (
+                          <Crown className="w-3 h-3" />
+                        ) : u.role === "admin" ? (
                           <Crown className="w-3 h-3" />
                         ) : (
                           <User className="w-3 h-3" />
                         )}
-                        {u.role === "admin" ? "Admin" : "User"}
+                        {u.role === "hqadmin" ? "Root" : u.role === "admin" ? "Admin" : "User"}
                       </span>
                     </td>
                     <td className="py-3.5 px-4 text-center font-semibold text-[#3a2010]">
@@ -593,13 +627,15 @@ const ListUser = () => {
                         >
                           <Eye className="w-3.5 h-3.5" />
                         </button>
-                        <button
-                          onClick={() => handleDelete(u._id)}
-                          className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 text-[#a08060] hover:text-red-500 transition-colors"
-                          title="Xoá"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        {isHQAdmin && (
+                          <button
+                            onClick={() => handleDelete(u._id)}
+                            className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 text-[#a08060] hover:text-red-500 transition-colors"
+                            title="Xoá"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -659,6 +695,7 @@ const ListUser = () => {
           onClose={() => setSelectedUser(null)}
           onRoleChange={handleRoleChange}
           updating={updating}
+          isHQAdmin={isHQAdmin}
         />
       )}
 
