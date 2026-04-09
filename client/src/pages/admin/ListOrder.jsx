@@ -10,6 +10,8 @@ import {
   Clock,
   XCircle,
   AlertCircle,
+  Building2,
+  MapPin,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import ConfirmModal from "../../components/admin/ConfirmModal";
@@ -404,6 +406,7 @@ const ListOrder = () => {
                   {[
                     "Mã đơn",
                     "Khách hàng",
+                    "Cơ sở",
                     "Món",
                     "Ngày",
                     "Phương thức",
@@ -440,6 +443,24 @@ const ListOrder = () => {
                       <p className="text-xs text-[#a08060]">
                         {order.user?.email || ""}
                       </p>
+                    </td>
+
+                    {/* Cơ sở */}
+                    <td className="px-5 py-4">
+                      {order.restaurant ? (
+                        <>
+                          <p className="font-semibold text-[#3a2010] whitespace-nowrap flex items-center gap-1">
+                            <Building2 className="w-3 h-3 text-[#C8714A]" />
+                            {order.restaurant.name}
+                          </p>
+                          <p className="text-xs text-[#a08060] flex items-center gap-1 mt-0.5">
+                            <MapPin className="w-3 h-3" />
+                            {order.restaurant.address}
+                          </p>
+                        </>
+                      ) : (
+                        <span className="text-xs text-[#c0a890] italic">—</span>
+                      )}
                     </td>
 
                     {/* Món */}

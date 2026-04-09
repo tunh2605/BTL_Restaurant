@@ -15,6 +15,8 @@ import {
   CheckCircle2,
   XCircle,
   Loader2,
+  Building2,
+  MapPin,
 } from "lucide-react";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -112,6 +114,15 @@ const ReservationModal = ({
             {[
               { icon: User, label: "Khách hàng", value: res.name },
               { icon: Phone, label: "Điện thoại", value: res.phone },
+              ...(res.restaurant
+                ? [
+                    {
+                      icon: Building2,
+                      label: "Cơ sở",
+                      value: res.restaurant.name,
+                    },
+                  ]
+                : []),
               {
                 icon: CalendarDays,
                 label: "Ngày",
@@ -495,6 +506,7 @@ const ListReservation = () => {
                 {[
                   "Mã đặt bàn",
                   "Khách hàng",
+                  "Cơ sở",
                   "Ngày · Giờ",
                   "Số người",
                   "Ghi chú",
@@ -514,7 +526,7 @@ const ListReservation = () => {
               {loading ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="text-center py-14 text-[#b09070] text-sm"
                   >
                     <RefreshCw className="w-6 h-6 mx-auto mb-2 text-[#C8714A] animate-spin" />
@@ -524,7 +536,7 @@ const ListReservation = () => {
               ) : paginated.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="text-center py-14 text-[#b09070] text-sm"
                   >
                     <AlertCircle className="w-8 h-8 mx-auto mb-2 text-[#e0caba]" />
@@ -553,6 +565,23 @@ const ListReservation = () => {
                         <Phone className="w-3 h-3" />
                         {r.phone}
                       </p>
+                    </td>
+                    {/* Restaurant */}
+                    <td className="py-3.5 px-4">
+                      {r.restaurant ? (
+                        <>
+                          <p className="font-semibold text-[#3a2010] whitespace-nowrap flex items-center gap-1">
+                            <Building2 className="w-3 h-3 text-[#C8714A]" />
+                            {r.restaurant.name}
+                          </p>
+                          <p className="text-xs text-[#a08060] flex items-center gap-1 mt-0.5">
+                            <MapPin className="w-3 h-3" />
+                            {r.restaurant.address}
+                          </p>
+                        </>
+                      ) : (
+                        <span className="text-xs text-[#c0a080] italic">—</span>
+                      )}
                     </td>
                     {/* Date · Time */}
                     <td className="py-3.5 px-4 whitespace-nowrap">

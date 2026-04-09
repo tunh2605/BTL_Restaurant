@@ -5,7 +5,7 @@ import AdminNotification from "../models/AdminNotification.js";
 // ─── USER: Tạo đặt bàn mới ────────────────────────────────────────────────────
 export const createReservation = async (req, res) => {
   try {
-    const { name, phone, date, time, numberOfPeople, note } = req.body;
+    const { name, phone, restaurantId, date, time, numberOfPeople, note } = req.body;
 
     if (!name || !phone || !date || !time || !numberOfPeople) {
       return res
@@ -15,6 +15,7 @@ export const createReservation = async (req, res) => {
 
     const reservation = await Reservation.create({
       user: req.user?.id || null,
+      restaurant: restaurantId || null,
       name,
       phone,
       date,
@@ -57,6 +58,7 @@ export const getAllReservations = async (req, res) => {
   try {
     const reservations = await Reservation.find()
       .populate("user", "name email avatar")
+      .populate("restaurant", "name address")
       .sort({ createdAt: -1 });
 
     res.json(reservations);
@@ -79,8 +81,9 @@ export const updateReservationStatus = async (req, res) => {
     const reservation = await Reservation.findByIdAndUpdate(
       id,
       { status },
-      { returnDocument: "after" },
-    ).populate("user", "name email avatar");
+      { new: true }
+    ).populate("user", "name email avatar")
+      .populate("restaurant", "name address");
 
     if (!reservation) {
       return res.status(404).json({ message: "Không tìm thấy đặt bàn." });
