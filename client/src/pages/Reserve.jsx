@@ -246,12 +246,13 @@ const Reserve = () => {
               <div key={i} className="flex items-center">
                 <div className="flex flex-col items-center">
                   <div
-                    className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ${i < step
-                      ? "bg-primary-dull text-white"
-                      : i === step
-                        ? "bg-primary-dull text-white ring-4 ring-primary/40"
-                        : "bg-[#E3E2E0] text-gray-400"
-                      }`}
+                    className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ${
+                      i < step
+                        ? "bg-primary-dull text-white"
+                        : i === step
+                          ? "bg-primary-dull text-white ring-4 ring-primary/40"
+                          : "bg-[#E3E2E0] text-gray-400"
+                    }`}
                   >
                     {i < step ? <CheckCircle className="w-5 h-5" /> : i + 1}
                   </div>
@@ -328,10 +329,11 @@ const Reserve = () => {
                       <button
                         key={n}
                         onClick={() => handleChange("numberOfPeople", n)}
-                        className={`py-3 rounded-2xl text-sm font-semibold transition-all duration-200 cursor-pointer ${form.numberOfPeople === n
-                          ? "bg-primary-dull text-white shadow-md"
-                          : "bg-[#F5EDE3] text-gray-600 hover:bg-primary/60"
-                          }`}
+                        className={`py-3 rounded-2xl text-sm font-semibold transition-all duration-200 cursor-pointer ${
+                          form.numberOfPeople === n
+                            ? "bg-primary-dull text-white shadow-md"
+                            : "bg-[#F5EDE3] text-gray-600 hover:bg-primary/60"
+                        }`}
                       >
                         <span className="block">{n}</span>
                         <span className="block text-xs opacity-70 mt-0.5">
@@ -368,7 +370,8 @@ const Reserve = () => {
                     Chọn cơ sở & ngày giờ
                   </h2>
                   <p className="text-sm text-gray-400">
-                    Chọn cơ sở và thời gian phù hợp để chúng tôi chuẩn bị tốt nhất.
+                    Chọn cơ sở và thời gian phù hợp để chúng tôi chuẩn bị tốt
+                    nhất.
                   </p>
                 </div>
 
@@ -380,7 +383,9 @@ const Reserve = () => {
                   {loadingRestaurants ? (
                     <p className="text-sm text-gray-400">Đang tải cơ sở...</p>
                   ) : restaurants.length === 0 ? (
-                    <p className="text-sm text-red-400">Không có cơ sở nào khả dụng.</p>
+                    <p className="text-sm text-red-400">
+                      Không có cơ sở nào khả dụng.
+                    </p>
                   ) : (
                     <div className="space-y-2">
                       {restaurants.map((r) => (
@@ -388,23 +393,26 @@ const Reserve = () => {
                           key={r._id}
                           type="button"
                           onClick={() => handleChange("restaurantId", r._id)}
-                          className={`w-full flex items-start gap-3 px-4 py-3.5 rounded-2xl text-left transition-all duration-200 cursor-pointer border-2 ${form.restaurantId === r._id
-                            ? "border-primary-dull bg-primary/10"
-                            : "border-transparent bg-[#F5EDE3] hover:border-primary/40"
-                            }`}
+                          className={`w-full flex items-start gap-3 px-4 py-3.5 rounded-2xl text-left transition-all duration-200 cursor-pointer border-2 ${
+                            form.restaurantId === r._id
+                              ? "border-primary-dull bg-primary/10"
+                              : "border-transparent bg-[#F5EDE3] hover:border-primary/40"
+                          }`}
                         >
                           <Building2
-                            className={`w-5 h-5 mt-0.5 shrink-0 ${form.restaurantId === r._id
-                              ? "text-primary-dull"
-                              : "text-gray-400"
-                              }`}
+                            className={`w-5 h-5 mt-0.5 shrink-0 ${
+                              form.restaurantId === r._id
+                                ? "text-primary-dull"
+                                : "text-gray-400"
+                            }`}
                           />
                           <div>
                             <p
-                              className={`text-sm font-semibold ${form.restaurantId === r._id
-                                ? "text-primary-dull"
-                                : "text-gray-700"
-                                }`}
+                              className={`text-sm font-semibold ${
+                                form.restaurantId === r._id
+                                  ? "text-primary-dull"
+                                  : "text-gray-700"
+                              }`}
                             >
                               {r.name}
                             </p>
@@ -448,10 +456,11 @@ const Reserve = () => {
                       <button
                         key={t}
                         onClick={() => handleChange("time", t)}
-                        className={`py-2.5 rounded-2xl text-sm font-semibold transition-all duration-200 cursor-pointer ${form.time === t
-                          ? "bg-primary-dull text-white shadow-md"
-                          : "bg-[#F5EDE3] text-gray-600 hover:bg-primary/60"
-                          }`}
+                        className={`py-2.5 rounded-2xl text-sm font-semibold transition-all duration-200 cursor-pointer ${
+                          form.time === t
+                            ? "bg-primary-dull text-white shadow-md"
+                            : "bg-[#F5EDE3] text-gray-600 hover:bg-primary/60"
+                        }`}
                       >
                         {t}
                       </button>
