@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { MapPin } from "lucide-react";
 import { BlurCircle } from "../components/BlurCircle";
 import { useFood } from "../context/FoodContext";
+import getOptimizedImage from "../libs/getOptimizedImage";
 
 const About = () => {
   const { restaurants, fetchRestaurants, statsData, fetchStats } = useFood();
@@ -78,7 +79,7 @@ const About = () => {
                 <div className="aspect-video overflow-hidden bg-[#F5EDE3]">
                   {r.images?.[0]?.url ? (
                     <img
-                      src={r.images[0].url}
+                      src={getOptimizedImage(r.images[0].url)}
                       alt={r.name}
                       className="w-full h-full object-cover"
                       loading="lazy"
