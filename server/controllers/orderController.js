@@ -7,7 +7,9 @@ import PromotionFood from "../models/PromotionFood.js";
 // ─── USER: Tạo đơn hàng mới ──────────────────────────────────────────────────
 export const createOrder = async (req, res) => {
   try {
-    const { restaurantId, items, note, paymentMethod, promotionId } = req.body;
+    const { restaurantId, items, note, phone, paymentMethod, promotionId } = req.body;
+
+    if (!phone) return res.status(400).json({ message: "Vui lòng nhập số điện thoại." });
 
     if (!items || items.length === 0)
       return res.status(400).json({ message: "Giỏ hàng trống." });
@@ -93,6 +95,7 @@ export const createOrder = async (req, res) => {
       finalPrice,
       promotion: promotionData,
       note: note || "",
+      phone,
       paymentMethod: paymentMethod || "online",
       status: "pending",
       isPaid: false,

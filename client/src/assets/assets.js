@@ -33,6 +33,48 @@ export const categories = [
   },
 ];
 
+export const FeaturedFoods = [
+  {
+    _id: "ff1",
+    name: "Butter Chicken",
+    description:
+      "Những miếng gà mọng nước được ướp qua đêm với sữa chua và gia vị tandoori, sau đó hầm chậm trong sốt cà chua tươi kết hợp bơ lạt và kem tươi. Vị béo ngậy hòa quyện cùng hương thơm của garam masala, quế và bạch đậu khấu tạo nên một món cà ri cổ điển không thể cưỡng lại.",
+    image:
+      "https://res.cloudinary.com/dee2rmdua/image/upload/v1775103504/tlpukqwx095cjpitmdgo.jpg",
+    price: 90000,
+  },
+
+  {
+    _id: "ff2",
+    name: "Paratha",
+    description:
+      "Bánh mì dẹt làm từ bột mì nguyên cám được gấp và cán nhiều lần tạo thành hàng chục lớp mỏng, sau đó chiên trên chảo gang với bơ ghee cho đến khi từng lớp tách ra giòn rụm. Ăn kèm dưa cải muối chua nhẹ và chutney bạc hà mát lạnh — bữa sáng kinh điển của người Ấn Độ.",
+    image:
+      "https://res.cloudinary.com/dee2rmdua/image/upload/v1775552838/i86wqrwkkaas4ujkcy7s.jpg",
+    price: 60000,
+  },
+
+  {
+    _id: "ff3",
+    name: "Chicken Tikka Masala",
+    description:
+      "Gà được xiên que và nướng trong lò tandoor truyền thống ở nhiệt độ cao, tạo lớp ngoài xém cạnh với hương khói đặc trưng. Sau đó được đun cùng sốt masala đỏ sánh gồm cà chua, hành tây caramel, ớt và hơn 15 loại gia vị. Mỗi miếng gà mang cả hương vị nướng than lẫn vị cà ri đậm đà — biểu tượng của ẩm thực Ấn Độ.",
+    image:
+      "https://res.cloudinary.com/dee2rmdua/image/upload/v1775554022/xouju0hnbsjekmsf8aqq.jpg",
+    price: 100000,
+  },
+
+  {
+    _id: "ff4",
+    name: "Masala Chai",
+    description:
+      "Trà đen Assam mạnh được đun sôi trực tiếp cùng sữa tươi nguyên kem, sau đó hãm với 6 loại gia vị: quế Ceylon, đinh hương, gừng tươi giã dập, hạt tiêu đen, hồi và bạch đậu khấu xanh. Vị trà đậm đà hòa với sữa béo và gia vị ấm nóng — tách chai này đủ sức xua tan mọi mệt mỏi.",
+    image:
+      "https://res.cloudinary.com/dee2rmdua/image/upload/v1775104255/svlgcdypyjja9iybf1ru.jpg",
+    price: 45000,
+  },
+];
+
 export const foods = [
   // Món Cà Ri
   {

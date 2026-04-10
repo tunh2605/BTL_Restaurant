@@ -217,7 +217,7 @@ const AdminNavBar = () => {
         {/* Notif dropdown */}
         {notifOpen && (
           <div
-            className="absolute right-0 top-[calc(100%+8px)] w-96 max-w-[calc(100vw-1.5rem)] bg-white rounded-2xl border border-[#ede0d4] shadow-lg z-50 flex flex-col"
+            className="absolute right-0 md:left-auto left-0 top-[calc(100%+8px)] w-[calc(100vw-1.5rem)] md:w-96 max-w-96 bg-white rounded-2xl border border-[#ede0d4] shadow-lg z-50 flex flex-col"
             style={{ maxHeight: "480px" }}
           >
             {/* header */}
@@ -243,7 +243,7 @@ const AdminNavBar = () => {
             </div>
 
             {/* list */}
-            <div className="overflow-y-auto flex-1">
+            <div className="overflow-y-auto flex-1 no-scrollbar">
               {loadingNotif && notifications.length === 0 ? (
                 <div className="py-8 text-center text-sm text-[#b09070]">
                   Đang tải...

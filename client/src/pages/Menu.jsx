@@ -2,6 +2,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import FoodCard from "../components/FoodCard";
 import { UtensilsCrossed } from "lucide-react";
 import { useFood } from "../context/FoodContext";
+import { BlurCircle } from "../components/BlurCircle";
 
 const Menu = () => {
   const { category } = useParams();
@@ -26,7 +27,14 @@ const Menu = () => {
     );
 
   return (
-    <div className="px-6 md:px-16 lg:px-24 pt-48 w-full">
+    <div className="px-6 md:px-16 lg:px-24 pt-40 w-full">
+      <BlurCircle
+        top="25%"
+        left="50%"
+        size="500px"
+        center
+        color="bg-primary/50"
+      />
       <div className="flex justify-between items-center w-full flex-col">
         <p className="bg-primary/60 rounded-full px-4 py-0.5 text-primary-dull">
           Hương vị bản địa

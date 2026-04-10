@@ -6,12 +6,12 @@ const FoodCard = ({ food, priority }) => {
   const navigate = useNavigate();
   const categorySlug = food.category?.slug;
   return (
-    <div className="rounded-3xl overflow-hidden p-4 bg-white/80 hover:-translate-y-2 transition-all">
+    <div className="rounded-3xl overflow-hidden md:p-3.5 bg-white/80 hover:-translate-y-2 transition-all">
       <div className="aspect-4/3">
         <img
           src={getOptimizedImage(food.image, 400)}
           alt={food.name}
-          className="w-full h-full rounded-4xl object-cover"
+          className="w-full h-full md:rounded-4xl object-cover"
           loading={priority ? "eager" : "lazy"} // ảnh đầu eager, còn lại lazy
           fetchPriority={priority ? "high" : "low"} // ưu tiên load ảnh LCP
           decoding="async" // không block main thread

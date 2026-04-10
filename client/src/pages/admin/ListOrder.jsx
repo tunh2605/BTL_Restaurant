@@ -406,6 +406,7 @@ const ListOrder = () => {
                   {[
                     "Mã đơn",
                     "Khách hàng",
+                    "SĐT",
                     "Cơ sở",
                     "Món",
                     "Ngày",
@@ -442,6 +443,13 @@ const ListOrder = () => {
                       </p>
                       <p className="text-xs text-[#a08060]">
                         {order.user?.email || ""}
+                      </p>
+                    </td>
+
+                    {/* SĐT */}
+                    <td className="px-5 py-4 whitespace-nowrap">
+                      <p className="text-[#3a2010] font-medium">
+                        {order.phone || "—"}
                       </p>
                     </td>
 

@@ -26,8 +26,9 @@ const getVNPayExpireDate = () => {
 // ─── Tạo URL thanh toán VNPay (CHƯA tạo order) ───────────────────────────────
 export const createVNPayUrl = async (req, res) => {
   try {
-    const { restaurantId, items, note, promotionId } = req.body;
+    const { restaurantId, items, note, phone, promotionId } = req.body;
 
+    if (!phone) return res.status(400).json({ message: "Vui lòng nhập số điện thoại." });
     if (!items || items.length === 0)
       return res.status(400).json({ message: "Giỏ hàng trống." });
 
@@ -109,6 +110,7 @@ export const createVNPayUrl = async (req, res) => {
         restaurantId,
         items,
         note: note || "",
+        phone,
         promotionId: promotionId || null,
         totalPrice,
         discount,
@@ -177,6 +179,7 @@ export const verifyReturn = async (req, res) => {
           finalPrice: snap.finalPrice,
           promotion: snap.promotionData || null,
           note: snap.note || "",
+          phone: snap.phone || "",
           paymentMethod: "vnpay",
           status: "completed",
           isPaid: true,
@@ -282,6 +285,7 @@ export const vnpayIPN = async (req, res) => {
           finalPrice: snap.finalPrice,
           promotion: snap.promotionData || null,
           note: snap.note || "",
+          phone: snap.phone || "",
           paymentMethod: "vnpay",
           status: "completed",
           isPaid: true,

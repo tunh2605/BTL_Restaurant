@@ -178,7 +178,7 @@ const Reserve = () => {
   return (
     <div className="min-h-screen relative overflow-hidden">
       {/* Hero section */}
-      <section className="relative px-6 md:px-16 lg:px-24 pt-48 pb-16 overflow-hidden">
+      <section className="relative px-6 md:px-16 lg:px-24 pt-40 pb-16 overflow-hidden">
         <BlurCircle
           top="50%"
           left="50%"

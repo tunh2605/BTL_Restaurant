@@ -140,12 +140,12 @@ const ListFoodContent = ({ isHQAdmin = true }) => {
           <div className="relative">
             <div
               ref={scrollRef}
-              className="flex gap-4 overflow-x-auto scroll-smooth no-scrollbar px-8 py-4 animate-fadeIn"
+              className="flex gap-3 sm:gap-4 overflow-x-auto scroll-smooth no-scrollbar px-4 sm:px-8 py-3 sm:py-4 animate-fadeIn"
             >
               {categories.map((cat, i) => (
                 <div
                   key={cat._id}
-                  className="min-w-50 shrink-0"
+                  className="min-w-36 sm:min-w-40 lg:min-w-50 shrink-0"
                   style={{ animationDelay: `${i * 80}ms` }}
                 >
                   <CategoryCard
@@ -191,7 +191,7 @@ const ListFoodContent = ({ isHQAdmin = true }) => {
             </div>
           </div>
 
-          <div className="grid grid-cols-12 text-xs font-semibold text-gray-400 uppercase tracking-wider pb-3 border-b border-gray-100 px-2">
+          <div className="hidden sm:grid grid-cols-12 text-xs font-semibold text-gray-400 uppercase tracking-wider pb-3 border-b border-gray-100 px-2">
             <div className="col-span-5">Món ăn</div>
             <div className="col-span-2">Danh mục</div>
             <div className="col-span-2">Giá (VNĐ)</div>
@@ -204,9 +204,9 @@ const ListFoodContent = ({ isHQAdmin = true }) => {
               <div
                 key={food._id}
                 style={{ animationDelay: `${i * 60}ms` }}
-                className="grid grid-cols-12 items-center py-4 px-2 hover:bg-[#faf7f4] rounded-xl transition-all duration-200 animate-fadeIn group"
+                className="grid sm:grid-cols-12 items-center py-3 sm:py-4 px-2 hover:bg-[#faf7f4] rounded-xl transition-all duration-200 animate-fadeIn group gap-3"
               >
-                <div className="col-span-5 flex items-center gap-3">
+                <div className="sm:col-span-5 flex items-center gap-3">
                   <img
                     src={getOptimizedImage(food.image)}
                     alt={food.name}
@@ -216,7 +216,7 @@ const ListFoodContent = ({ isHQAdmin = true }) => {
                     <p className="font-semibold text-gray-800 truncate">
                       {food.name}
                     </p>
-                    <p className="text-xs text-gray-400 truncate">
+                    <p className="text-xs text-gray-400 truncate sm:block hidden">
                       {food.description && food.description.length > 35
                         ? food.description.slice(0, 35) + "..."
                         : food.description || ""}
@@ -224,7 +224,7 @@ const ListFoodContent = ({ isHQAdmin = true }) => {
                   </div>
                 </div>
 
-                <div className="col-span-2">
+                <div className="sm:col-span-2">
                   <CategoryPill
                     name={food.category?.name || ""}
                     index={categories.findIndex(
@@ -233,16 +233,16 @@ const ListFoodContent = ({ isHQAdmin = true }) => {
                   />
                 </div>
 
-                <div className="col-span-2 font-semibold text-gray-700">
+                <div className="sm:col-span-2 font-semibold text-gray-700 text-sm sm:text-base">
                   {food.price.toLocaleString("vi-VN")}
                 </div>
 
-                <div className="col-span-2">
+                <div className="sm:col-span-2">
                   <StatusBadge isAvailable={food.isAvailable} />
                 </div>
 
                 {isHQAdmin && (
-                  <div className="col-span-1 flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <div className="sm:col-span-1 flex items-center justify-end gap-2 sm:opacity-0 group-hover:sm:opacity-100 transition-opacity duration-200">
                     <button
                       className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors cursor-pointer"
                       onClick={() => navigate(`/admin/foods/edit/${food._id}`)}

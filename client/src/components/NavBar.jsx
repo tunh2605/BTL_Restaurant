@@ -6,6 +6,7 @@ import {
   ShoppingCartIcon,
   UserIcon,
   XIcon,
+  LayoutDashboardIcon,
 } from "lucide-react";
 import { assets } from "../assets/assets";
 import { useAuth } from "../context/AuthContext";
@@ -28,7 +29,7 @@ const NavBar = () => {
   return (
     <>
       <header
-        className="fixed top-0 left-0 z-9999 w-full flex items-center justify-between 
+        className="fixed top-0 left-0 z-60 w-full flex items-center justify-between 
       px-3 md:px-12 lg:px-32 py-1.5 md:py-2 backdrop-blur-md bg-white/30 border-b border-white/20 shadow-sm"
       >
         <Link to="/" className="shrink-0">
@@ -119,6 +120,15 @@ const NavBar = () => {
                     </div>
                   </Link>
                 </div>
+                {(user?.role === "hqadmin" || user?.role === "admin") && (
+                  <Link
+                    to="/admin"
+                    className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-[#fdf8f5] transition-colors border-b border-gray-100"
+                  >
+                    <LayoutDashboardIcon className="w-4 h-4 text-gray-400" />
+                    Quản trị
+                  </Link>
+                )}
                 <button
                   onClick={logout}
                   className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors cursor-pointer"

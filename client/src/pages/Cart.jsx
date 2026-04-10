@@ -11,6 +11,9 @@ import {
   ShoppingBag,
   MapPin,
   FileText,
+  Phone,
+  X,
+  User,
 } from "lucide-react";
 import { BlurCircle } from "../components/BlurCircle";
 import { useCart } from "../context/CartContext";
@@ -24,12 +27,14 @@ const API = import.meta.env.VITE_API_URL;
 const Cart = () => {
   const { cartItems, removeFromCart, updateQuantity, clearCart, totalPrice } =
     useCart();
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, user } = useAuth();
   const navigate = useNavigate();
 
   const [paymentMethod, setPaymentMethod] = useState("vnpay");
   const [note, setNote] = useState("");
+  const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const [promotions, setPromotions] = useState([]);
   const [selectedPromotion, setSelectedPromotion] = useState(null);
@@ -159,30 +164,38 @@ const Cart = () => {
       return;
     }
     if (cartItems.length === 0) return;
+    if (!phone.trim()) {
+      toast.error("Vui lòng nhập số điện thoại.");
+      return;
+    }
+    const phoneRegex = /^(0[0-9]{9})$/;
+    if (!phoneRegex.test(phone.trim())) {
+      toast.error("Số điện thoại không hợp lệ.");
+      return;
+    }
 
+    setShowConfirmModal(true);
+  };
+
+  const confirmCheckout = async () => {
+    setShowConfirmModal(false);
     setLoading(true);
     try {
       if (paymentMethod === "vnpay") {
-        // Gửi toàn bộ cart data lên server để tạo VNPay URL
-        // Order sẽ được tạo SAU KHI thanh toán thành công
-        const payRes = await axios.post(
-          `${API}/api/payments/create-url`,
-          {
-            restaurantId,
-            items: cartItems.map((i) => ({
-              foodId: i.foodId,
-              name: i.name,
-              price: i.price,
-              quantity: i.quantity,
-            })),
-            promotionId: selectedPromotion?._id ?? null,
-            note,
-          },
-        );
-        // Redirect sang VNPay — cart sẽ được clear sau khi verify thành công
+        const payRes = await axios.post(`${API}/api/payments/create-url`, {
+          restaurantId,
+          items: cartItems.map((i) => ({
+            foodId: i.foodId,
+            name: i.name,
+            price: i.price,
+            quantity: i.quantity,
+          })),
+          promotionId: selectedPromotion?._id ?? null,
+          note,
+          phone,
+        });
         window.location.href = payRes.data.paymentUrl;
       } else {
-        // Thanh toán tiền mặt — tạo order ngay
         await axios.post(`${API}/api/orders`, {
           restaurantId,
           items: cartItems.map((i) => ({
@@ -193,10 +206,13 @@ const Cart = () => {
           })),
           promotionId: selectedPromotion?._id ?? null,
           note,
+          phone,
           paymentMethod: "cash",
         });
         clearCart();
-        toast.success("Đặt hàng thành công! Vui lòng thanh toán khi nhận hàng.");
+        toast.success(
+          "Đặt hàng thành công! Vui lòng thanh toán khi nhận hàng.",
+        );
         navigate("/profile");
       }
     } catch (err) {
@@ -381,6 +397,25 @@ const Cart = () => {
 
           {/* Right: Summary + Payment */}
           <div className="space-y-4">
+            {/* Contact info */}
+            <div className="bg-white rounded-3xl shadow-sm p-6">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 rounded-xl bg-[#FEEFDB] flex items-center justify-center">
+                  <Phone className="w-4 h-4 text-primary-dull" />
+                </div>
+                <span className="font-semibold text-gray-700">
+                  Số điện thoại liên hệ
+                </span>
+              </div>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="Nhập số điện thoại..."
+                className="w-full bg-[#F5EDE3] rounded-2xl px-4 py-3 text-sm text-gray-700 outline-none placeholder:text-gray-400 focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
+
             {/* Order summary */}
             <div className="bg-white rounded-3xl shadow-sm p-6">
               <h3 className="font-bold text-gray-800 text-lg mb-4">
@@ -557,6 +592,161 @@ const Cart = () => {
           </div>
         </div>
       </section>
+
+      {/* Confirm Modal */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 z-61 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setShowConfirmModal(false)}
+          />
+          <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div className="bg-primary-dull px-6 py-4 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-white">
+                Xác nhận đơn hàng
+              </h3>
+              <button
+                onClick={() => setShowConfirmModal(false)}
+                className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white hover:bg-white/30 transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="flex items-center gap-3 p-3 bg-[#F5EDE3] rounded-2xl">
+                <div className="w-10 h-10 rounded-xl bg-[#FEEFDB] flex items-center justify-center shrink-0">
+                  <User className="w-5 h-5 text-primary-dull" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Người đặt</p>
+                  <p className="font-semibold text-gray-800">
+                    {user?.name || "Khách hàng"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 p-3 bg-[#F5EDE3] rounded-2xl">
+                <div className="w-10 h-10 rounded-xl bg-[#FEEFDB] flex items-center justify-center shrink-0">
+                  <Phone className="w-5 h-5 text-primary-dull" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Số điện thoại</p>
+                  <p className="font-semibold text-gray-800">{phone}</p>
+                </div>
+              </div>
+
+              <div className="border-t border-gray-100 pt-4">
+                <p className="text-sm text-gray-500 mb-2">Danh sách món</p>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {cartItems.map((item) => (
+                    <div
+                      key={`${item.foodId}-${item.restaurantId}`}
+                      className="flex justify-between items-center text-sm"
+                    >
+                      <span className="text-gray-700">
+                        {item.name} x{item.quantity}
+                      </span>
+                      <span className="font-medium text-gray-800">
+                        {(item.price * item.quantity).toLocaleString("vi-VN")}đ
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="border-t border-gray-100 pt-4 space-y-1">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Tạm tính</span>
+                  <span className="text-gray-700">
+                    {totalPrice.toLocaleString("vi-VN")}đ
+                  </span>
+                </div>
+                {discount > 0 && (
+                  <div className="flex justify-between text-sm text-green-600">
+                    <span>Giảm giá</span>
+                    <span>-{discount.toLocaleString("vi-VN")}đ</span>
+                  </div>
+                )}
+                <div className="flex justify-between font-bold text-lg pt-2">
+                  <span>Tổng cộng</span>
+                  <span className="text-primary-dull">
+                    {(totalPrice - discount).toLocaleString("vi-VN")}đ
+                  </span>
+                </div>
+              </div>
+
+              {note && (
+                <div className="border-t border-gray-100 pt-4">
+                  <p className="text-sm text-gray-500 mb-1">Ghi chú</p>
+                  <p className="text-sm text-gray-700 italic">{note}</p>
+                </div>
+              )}
+
+              <div className="border-t border-gray-100 pt-4">
+                <p className="text-sm text-gray-500 mb-2">
+                  Phương thức thanh toán
+                </p>
+                <div className="flex items-center gap-3 p-3 bg-[#F5EDE3] rounded-2xl">
+                  {paymentMethod === "vnpay" ? (
+                    <>
+                      <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+                        <CreditCard className="w-5 h-5 text-blue-500" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-800">VNPay</p>
+                        <p className="text-xs text-gray-400">
+                          Thẻ ATM / Visa / QR Code
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center shrink-0">
+                        <Banknote className="w-5 h-5 text-green-500" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-800">Tiền mặt</p>
+                        <p className="text-xs text-gray-400">
+                          Thanh toán khi nhận hàng
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="px-6 pb-6 flex gap-3">
+              <button
+                onClick={() => setShowConfirmModal(false)}
+                className="flex-1 py-3 border-2 border-gray-200 text-gray-600 rounded-full font-semibold hover:bg-gray-50 transition cursor-pointer"
+              >
+                Huỷ
+              </button>
+              <button
+                onClick={confirmCheckout}
+                disabled={loading}
+                className="flex-1 py-3 bg-primary-dull text-white rounded-full font-semibold hover:bg-primary-dull/90 transition disabled:opacity-60 cursor-pointer flex items-center justify-center gap-2"
+              >
+                {loading ? (
+                  "Đang xử lý..."
+                ) : paymentMethod === "vnpay" ? (
+                  <>
+                    <CreditCard className="w-4 h-4" />
+                    Thanh toán
+                  </>
+                ) : (
+                  <>
+                    <Banknote className="w-4 h-4" />
+                    Xác nhận
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
