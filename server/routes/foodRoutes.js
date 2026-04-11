@@ -5,6 +5,7 @@ import {
   getFoodById,
   getFoods,
   updateFood,
+  getFoodStats,
 } from "../controllers/foodController.js";
 import { verifyHQAdmin } from "../middleware/auth.js";
 
@@ -12,6 +13,7 @@ const foodRouter = express.Router();
 
 // nguoi dung va admin
 foodRouter.get("/all-foods", getFoods);
+foodRouter.get("/stats", getFoodStats);
 foodRouter.get("/:id", getFoodById);
 
 // option cho hq admin, chi hq admin moi duoc them, sua, xoa mon an

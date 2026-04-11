@@ -20,6 +20,7 @@ const foodSchema = new mongoose.Schema(
     ],
 
     isAvailable: { type: Boolean, default: true },
+    sold: { type: Number, default: 0 },
   },
   { timestamps: true },
 );

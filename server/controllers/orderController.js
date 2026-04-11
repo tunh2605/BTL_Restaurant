@@ -3,6 +3,7 @@ import OrderItem from "../models/OrderItem.js";
 import AdminNotification from "../models/AdminNotification.js";
 import Promotion from "../models/Promotion.js";
 import PromotionFood from "../models/PromotionFood.js";
+import Food from "../models/Food.js";
 
 // ─── USER: Tạo đơn hàng mới ──────────────────────────────────────────────────
 export const createOrder = async (req, res) => {
@@ -110,6 +111,13 @@ export const createOrder = async (req, res) => {
     }));
 
     await OrderItem.insertMany(orderItems);
+
+    // Cập nhật số lượng bán cho từng món ăn
+    for (const item of items) {
+      await Food.findByIdAndUpdate(item.foodId, {
+        $inc: { sold: item.quantity },
+      });
+    }
 
     // Chỉ tăng usedCount của khuyến mãi sau khi tạo đơn hàng thành công
     if (promoToSave) {

@@ -1,4 +1,6 @@
 import Food from "../models/Food.js";
+import OrderItem from "../models/OrderItem.js";
+import Order from "../models/Order.js";
 import cloudinary from "../configs/cloudinary.js";
 
 const FOOD_POPULATE = [{ path: "category" }, { path: "restaurants" }];
@@ -82,6 +84,137 @@ export const deleteFood = async (req, res) => {
     }
     await Food.findByIdAndDelete(id);
     res.json({ success: true, message: "Món ăn đã được xóa" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const getFoodStats = async (req, res) => {
+  try {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const totalStats = await Order.aggregate([
+      { $match: { status: "completed" } },
+      {
+        $group: {
+          _id: null,
+          totalOrders: { $sum: 1 },
+          totalRevenue: { $sum: "$finalPrice" },
+        },
+      },
+    ]);
+
+    const dailyOrders = await Order.aggregate([
+      { $match: { status: "completed", createdAt: { $gte: thirtyDaysAgo } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          revenue: { $sum: "$finalPrice" },
+          orders: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+
+    const topSellingFoods = await OrderItem.aggregate([
+      {
+        $lookup: {
+          from: "orders",
+          localField: "order",
+          foreignField: "_id",
+          as: "orderInfo",
+        },
+      },
+      { $unwind: "$orderInfo" },
+      { $match: { "orderInfo.status": "completed", "orderInfo.createdAt": { $gte: thirtyDaysAgo } } },
+      {
+        $group: {
+          _id: "$food",
+          sold: { $sum: "$quantity" },
+          revenue: { $sum: { $multiply: ["$price", "$quantity"] } },
+        },
+      },
+      { $sort: { sold: -1 } },
+      { $limit: 10 },
+      {
+        $lookup: {
+          from: "foods",
+          localField: "_id",
+          foreignField: "_id",
+          as: "foodInfo",
+        },
+      },
+      { $unwind: { path: "$foodInfo", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "categories",
+          localField: "foodInfo.category",
+          foreignField: "_id",
+          as: "category",
+        },
+      },
+      { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          _id: "$foodInfo._id",
+          name: "$foodInfo.name",
+          image: "$foodInfo.image",
+          price: "$foodInfo.price",
+          category: { $ifNull: ["$category", null] },
+          sold: 1,
+          revenue: 1,
+        },
+      },
+    ]);
+
+    const categoryStats = await OrderItem.aggregate([
+      {
+        $lookup: {
+          from: "orders",
+          localField: "order",
+          foreignField: "_id",
+          as: "orderInfo",
+        },
+      },
+      { $unwind: "$orderInfo" },
+      { $match: { "orderInfo.status": "completed", "orderInfo.createdAt": { $gte: thirtyDaysAgo } } },
+      {
+        $lookup: {
+          from: "foods",
+          localField: "food",
+          foreignField: "_id",
+          as: "foodInfo",
+        },
+      },
+      { $unwind: "$foodInfo" },
+      {
+        $lookup: {
+          from: "categories",
+          localField: "foodInfo.category",
+          foreignField: "_id",
+          as: "categoryInfo",
+        },
+      },
+      { $unwind: { path: "$categoryInfo", preserveNullAndEmptyArrays: true } },
+      {
+        $group: {
+          _id: { $ifNull: ["$categoryInfo.name", "Khác"] },
+          totalSold: { $sum: "$quantity" },
+        },
+      },
+      { $sort: { totalSold: -1 } },
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        topSellingFoods,
+        dailyOrders,
+        categoryStats,
+        totalStats: totalStats[0] || { totalOrders: 0, totalRevenue: 0 },
+      },
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
