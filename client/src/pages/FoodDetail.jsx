@@ -68,10 +68,6 @@ const FoodDetail = () => {
   };
 
   const handleBuyNow = () => {
-    if (!branch) {
-      toast.error("Vui lòng chọn chi nhánh trước khi mua.");
-      return;
-    }
     handleAddToCart();
     navigate("/cart");
   };

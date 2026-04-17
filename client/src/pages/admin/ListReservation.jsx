@@ -202,7 +202,7 @@ const ListReservation = () => {
   const [updating, setUpdating] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [sortBy, setSortBy] = useState("date_desc");
+  const [sortBy, setSortBy] = useState("created_desc");
   const [sortOpen, setSortOpen] = useState(false);
   const [selected, setSelected] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -324,10 +324,10 @@ const ListReservation = () => {
   };
 
   const sortOptions = [
+    { value: "created_desc", label: "Mới nhất" },
+    { value: "created_asc", label: "Cũ nhất" },
     { value: "date_desc", label: "Ngày đặt mới nhất" },
     { value: "date_asc", label: "Ngày đặt cũ nhất" },
-    { value: "created_desc", label: "Tạo mới nhất" },
-    { value: "created_asc", label: "Tạo cũ nhất" },
   ];
 
   const statusTabs = [
