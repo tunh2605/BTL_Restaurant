@@ -69,7 +69,8 @@ const Register = () => {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/google`;
+    // redirect tới backend Google OAuth endpoint
+    window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/login-by-oauth`;
   };
 
   const passwordMatch =
