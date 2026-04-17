@@ -10,7 +10,7 @@ export const createReview = async (req, res) => {
     if (existing) {
       return res.status(400).json({
         success: false,
-        message: "You have already reviewed this food",
+        message: "Bạn đã đánh giá món này rồi !",
       });
     }
 
@@ -27,13 +27,13 @@ export const createReview = async (req, res) => {
     await review.save();
     res.status(201).json({
       success: true,
-      message: "Review created successfully",
+      message: "Thêm đánh giá thành công",
       data: review,
     });
   } catch (error) {
     res
       .status(500)
-      .json({ success: false, message: "Error creating review", error });
+      .json({ success: false, message: "Lỗi tạo đánh giá ", error });
   }
 };
 
@@ -49,7 +49,7 @@ export const getReviewFoodByUserId = async (req, res) => {
   } catch (error) {
     res
       .status(500)
-      .json({ success: false, message: "Error fetching review", error });
+      .json({ success: false, message: "Lỗi tải đánh giá ", error });
   }
 };
 
@@ -64,7 +64,7 @@ export const getReviewsByFoodId = async (req, res) => {
   } catch (error) {
     res
       .status(500)
-      .json({ success: false, message: "Error fatching reviews", error });
+      .json({ success: false, message: "Lỗi tải đánh giá ", error });
   }
 };
 
@@ -91,7 +91,7 @@ export const deleteReview = async (req, res) => {
   } catch (error) {
     res
       .status(500)
-      .json({ success: false, message: "Error deleting review", error });
+      .json({ success: false, message: "Lỗi xóa đánh giá ", error });
   }
 };
 
@@ -105,7 +105,7 @@ export const updateReview = async (req, res) => {
     if (!review) {
       return res
         .status(404)
-        .json({ success: false, message: "Review not found!" });
+        .json({ success: false, message: "Không tìm thấy đánh giá !" });
     }
 
     if (review.user.toString() !== userId && req.user.role !== "hqadmin") {
